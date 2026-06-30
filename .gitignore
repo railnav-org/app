@@ -1,0 +1,30 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+new-key
+RailNav-keystore
+thane_station.gpkg
+/app/build/
+release-key
+
+Exclude all generated build artifacts
+**/build/
+*.apk
+*.ap_
+*.aab
+
+# Specific metadata and profile files seen in your commit window
+output-metadata.json
+*.dm
