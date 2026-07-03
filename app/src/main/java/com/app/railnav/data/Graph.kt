@@ -1,6 +1,9 @@
 package com.app.railnav.data
 
-class GraphNode(val properties: NodeProperties, val coordinates: List<Double>) { // UPDATED: Store Triple(Neighbor, Distance, EdgeMetadata)
+class GraphNode(
+    val properties: NodeProperties,
+    val coordinates: List<Double>
+) { // UPDATED: Store Triple(Neighbor, Distance, EdgeMetadata)
 
     val neighbors: MutableList<Triple<GraphNode, Double, EdgeProperties>> = mutableListOf()
 }
@@ -13,7 +16,8 @@ class Graph {
 
         // Step 1: Create GraphNodes
         nodeFeatures.forEach { feature ->
-            nodes[feature.properties.node_id] = GraphNode(feature.properties, feature.geometry.coordinates)
+            nodes[feature.properties.node_id] =
+                GraphNode(feature.properties, feature.geometry.coordinates)
         }
 
         // Step 2: Build connections with edge metadata

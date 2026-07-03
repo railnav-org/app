@@ -44,7 +44,8 @@ abstract class RailNavDatabase : RoomDatabase() {
                 val json = Json { ignoreUnknownKeys = true }
 
                 // 1. Parse & Insert Nodes
-                val nodeJson = context.assets.open("nodes.geojson").bufferedReader().use { it.readText() }
+                val nodeJson =
+                    context.assets.open("nodes.geojson").bufferedReader().use { it.readText() }
                 val nodeCollection = json.decodeFromString<NodeFeatureCollection>(nodeJson)
                 val nodeEntities = nodeCollection.features.map { feature ->
                     NodeEntity(
@@ -59,7 +60,8 @@ abstract class RailNavDatabase : RoomDatabase() {
                 dao.insertNodes(nodeEntities)
 
                 // 2. Parse & Insert Edges
-                val edgeJson = context.assets.open("edges.geojson").bufferedReader().use { it.readText() }
+                val edgeJson =
+                    context.assets.open("edges.geojson").bufferedReader().use { it.readText() }
                 val edgeCollection = json.decodeFromString<EdgeFeatureCollection>(edgeJson)
                 val edgeEntities = edgeCollection.features.map { feature ->
                     EdgeEntity(

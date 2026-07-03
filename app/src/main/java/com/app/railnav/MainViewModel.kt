@@ -276,14 +276,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun findPath() {
         val startId = _uiState.value.startNode?.properties?.node_id
-        val endId   = _uiState.value.endNode?.properties?.node_id
+        val endId = _uiState.value.endNode?.properties?.node_id
         if (startId == null || endId == null) return
 
         _uiState.value = _uiState.value.copy(isLoading = true)
         viewModelScope.launch {
             try {
                 val result = withContext(Dispatchers.Default) {
-                    val path = pathfinder.findShortestPath(startId, endId, _uiState.value.isAccessibleRoutePreferred)
+                    val path = pathfinder.findShortestPath(
+                        startId,
+                        endId,
+                        _uiState.value.isAccessibleRoutePreferred
+                    )
                     val boundingBox = calculateBoundingBox(path)
 
                     // FIX 1: If path is null, return an empty list instead of a List of Strings
@@ -298,7 +302,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     if (path != null && path.size > 1) {
                         for (i in 0 until path.size - 1) {
                             val p1 = GeoPoint(path[i].coordinates[1], path[i].coordinates[0])
-                            val p2 = GeoPoint(path[i+1].coordinates[1], path[i+1].coordinates[0])
+                            val p2 =
+                                GeoPoint(path[i + 1].coordinates[1], path[i + 1].coordinates[0])
                             totalDistance += p1.distanceToAsDouble(p2)
                         }
                     }
@@ -315,18 +320,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 }
 
                 _uiState.value = _uiState.value.copy(
-                    calculatedPath  = result.finalPath,
-                    instructions    = result.finalInstructions,
+                    calculatedPath = result.finalPath,
+                    instructions = result.finalInstructions,
                     pathBoundingBox = result.finalBox,
                     totalRouteDistanceMeters = result.dist,
                     etaMinutes = if (result.time < 1) 1 else result.time,
-                    isLoading       = false,
+                    isLoading = false,
                     currentInstructionIndex = 0
                 )
             } catch (_: Exception) {
                 // FIX 2: On crash, return an empty list instead of a List of Strings
                 _uiState.value = _uiState.value.copy(
-                    isLoading    = false,
+                    isLoading = false,
                     instructions = emptyList()
                 )
             }
@@ -351,10 +356,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun swapNodes() {
         val s = _uiState.value
         _uiState.value = s.copy(
-            startNode       = s.endNode,
-            endNode         = s.startNode,
-            calculatedPath  = null,
-            instructions    = emptyList(),
+            startNode = s.endNode,
+            endNode = s.startNode,
+            calculatedPath = null,
+            instructions = emptyList(),
             pathBoundingBox = null
         )
     }
@@ -382,7 +387,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val allNodes = _uiState.value.allNodeFeatures
         if (allNodes.isEmpty()) return
         val closest = allNodes.minByOrNull { node ->
-            GeoPoint(node.geometry.coordinates[1], node.geometry.coordinates[0]).distanceToAsDouble(tapPoint)
+            GeoPoint(node.geometry.coordinates[1], node.geometry.coordinates[0]).distanceToAsDouble(
+                tapPoint
+            )
         }
         // Reuse the smart logic so touching the map respects the active input field
         if (closest != null) onMarkerTapped(closest)
@@ -401,14 +408,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
             // 1. Calculate how far the user is from the closest point on the active path
             val minDistanceToPath = currentState.calculatedPath.minOfOrNull { pathNode ->
-                GeoPoint(pathNode.coordinates[1], pathNode.coordinates[0]).distanceToAsDouble(location)
+                GeoPoint(pathNode.coordinates[1], pathNode.coordinates[0]).distanceToAsDouble(
+                    location
+                )
             } ?: 0.0
 
             // 2. If they wander more than 25 meters away from the line, they are off-route!
             if (minDistanceToPath > 25.0) {
                 // Find the nearest station node to their current rogue location
                 val nearestNode = currentState.allNodeFeatures.minByOrNull { node ->
-                    GeoPoint(node.geometry.coordinates[1], node.geometry.coordinates[0]).distanceToAsDouble(location)
+                    GeoPoint(
+                        node.geometry.coordinates[1],
+                        node.geometry.coordinates[0]
+                    ).distanceToAsDouble(location)
                 }
 
                 if (nearestNode != null && nearestNode.properties.node_id != currentState.startNode?.properties?.node_id) {
@@ -426,18 +438,25 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         if (currentPath != null && currentPath.isNotEmpty()) {
             // 1. Find where the user is currently located on the path
             val closestNodeIndex = currentPath.indices.minByOrNull { i ->
-                GeoPoint(currentPath[i].coordinates[1], currentPath[i].coordinates[0]).distanceToAsDouble(location)
+                GeoPoint(
+                    currentPath[i].coordinates[1],
+                    currentPath[i].coordinates[0]
+                ).distanceToAsDouble(location)
             } ?: 0
 
             // 2. Start with the distance from the user to the path
             var remainingDist = location.distanceToAsDouble(
-                GeoPoint(currentPath[closestNodeIndex].coordinates[1], currentPath[closestNodeIndex].coordinates[0])
+                GeoPoint(
+                    currentPath[closestNodeIndex].coordinates[1],
+                    currentPath[closestNodeIndex].coordinates[0]
+                )
             )
 
             // 3. Add up the rest of the path to the destination
             for (i in closestNodeIndex until currentPath.size - 1) {
                 val p1 = GeoPoint(currentPath[i].coordinates[1], currentPath[i].coordinates[0])
-                val p2 = GeoPoint(currentPath[i+1].coordinates[1], currentPath[i+1].coordinates[0])
+                val p2 =
+                    GeoPoint(currentPath[i + 1].coordinates[1], currentPath[i + 1].coordinates[0])
                 remainingDist += p1.distanceToAsDouble(p2)
             }
 
@@ -451,7 +470,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         // ====================================================================
 
         if (currentState.instructions.isNotEmpty() && currentState.calculatedPath != null) {
-            val currentInstruction = currentState.instructions.getOrNull(currentState.currentInstructionIndex)
+            val currentInstruction =
+                currentState.instructions.getOrNull(currentState.currentInstructionIndex)
 
             if (currentInstruction != null) {
                 val targetLoc = GeoPoint(
@@ -480,7 +500,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
         val nearest = allNodes
             .sortedBy {
-                GeoPoint(it.geometry.coordinates[1], it.geometry.coordinates[0]).distanceToAsDouble(location)
+                GeoPoint(it.geometry.coordinates[1], it.geometry.coordinates[0]).distanceToAsDouble(
+                    location
+                )
             }
             .take(3)
 
@@ -520,16 +542,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun clearStartNode() {
-        _uiState.value = _uiState.value.copy(startNode = null, calculatedPath = null, instructions = emptyList())
+        _uiState.value =
+            _uiState.value.copy(startNode = null, calculatedPath = null, instructions = emptyList())
     }
 
     fun clearEndNode() {
-        _uiState.value = _uiState.value.copy(endNode = null, calculatedPath = null, instructions = emptyList())
+        _uiState.value =
+            _uiState.value.copy(endNode = null, calculatedPath = null, instructions = emptyList())
     }
 
     fun onSearchResultSelected(node: NodeFeature) {
         _uiState.value = _uiState.value.copy(
-            endNode     = node,
+            endNode = node,
             searchQuery = "",
             searchResults = emptyList()
         )
@@ -567,7 +591,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
         // Use GPS location if available; otherwise, use the selected start node
         val referenceLocation = currentState.userGpsLocation
-            ?: currentState.startNode?.let { GeoPoint(it.geometry.coordinates[1], it.geometry.coordinates[0]) }
+            ?: currentState.startNode?.let {
+                GeoPoint(
+                    it.geometry.coordinates[1],
+                    it.geometry.coordinates[0]
+                )
+            }
 
         if (referenceLocation == null) return
 
@@ -581,7 +610,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 "exit" -> nodeType == "ENTRY/EXIT"
                 "stairs" -> nodeType.contains("STAIRWAY")
                 "ticket", "toilet" -> nodeType == "FACILITY" && nodeName.contains(keyword.lowercase())
-                else -> nodeName.contains(keyword.lowercase()) || nodeType.lowercase().contains(keyword.lowercase())
+                else -> nodeName.contains(keyword.lowercase()) || nodeType.lowercase()
+                    .contains(keyword.lowercase())
             }
         }
 
@@ -593,7 +623,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         var finalStartNode = currentState.startNode
         if (finalStartNode == null) {
             finalStartNode = allNodes.minByOrNull {
-                GeoPoint(it.geometry.coordinates[1], it.geometry.coordinates[0]).distanceToAsDouble(referenceLocation)
+                GeoPoint(it.geometry.coordinates[1], it.geometry.coordinates[0]).distanceToAsDouble(
+                    referenceLocation
+                )
             }
         }
         if (finalStartNode == null) return
@@ -610,13 +642,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 // FIX: Calculate actual walking distance using Pathfinder instead of straight-line distance
                 for (targetNode in matchedNodes) {
                     val targetId = targetNode.properties.node_id
-                    val path = pathfinder.findShortestPath(startId, targetId, currentState.isAccessibleRoutePreferred)
+                    val path = pathfinder.findShortestPath(
+                        startId,
+                        targetId,
+                        currentState.isAccessibleRoutePreferred
+                    )
 
                     if (path != null && path.size > 1) {
                         var pathDistance = 0.0
                         for (i in 0 until path.size - 1) {
                             val p1 = GeoPoint(path[i].coordinates[1], path[i].coordinates[0])
-                            val p2 = GeoPoint(path[i+1].coordinates[1], path[i+1].coordinates[0])
+                            val p2 =
+                                GeoPoint(path[i + 1].coordinates[1], path[i + 1].coordinates[0])
                             pathDistance += p1.distanceToAsDouble(p2)
                         }
 
@@ -629,7 +666,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
                 // Fallback to straight-line distance if no valid path exists (e.g. disconnected nodes)
                 closestFacilityNode ?: matchedNodes.minByOrNull { node ->
-                    GeoPoint(node.geometry.coordinates[1], node.geometry.coordinates[0]).distanceToAsDouble(referenceLocation)
+                    GeoPoint(
+                        node.geometry.coordinates[1],
+                        node.geometry.coordinates[0]
+                    ).distanceToAsDouble(referenceLocation)
                 }
             }
 

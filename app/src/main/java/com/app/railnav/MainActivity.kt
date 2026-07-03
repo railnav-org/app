@@ -1,60 +1,150 @@
 package com.app.railnav
 
 import android.Manifest
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
-import java.util.Calendar
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Accessible
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ConfirmationNumber
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.DragHandle
+import androidx.compose.material.icons.filled.DynamicFeed
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Flag
+import androidx.compose.material.icons.filled.FormatListNumbered
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.LocationOff
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.MedicalServices
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.Navigation
+import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Stairs
+import androidx.compose.material.icons.filled.SwapVert
+import androidx.compose.material.icons.filled.TrackChanges
+import androidx.compose.material.icons.filled.Train
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.Wc
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DividerDefaults
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ElevatedFilterChip
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.NavigationDrawerItemDefaults
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDrawerState
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.app.railnav.data.*
+import com.app.railnav.data.FacilityItem
+import com.app.railnav.data.NavigationInstruction
+import com.app.railnav.data.NodeFeature
+import com.app.railnav.data.TrainDirection
+import com.app.railnav.data.TrainRepository
+import com.app.railnav.data.TrainSchedule
 import com.app.railnav.ui.theme.RailNavTheme
 import kotlinx.coroutines.launch
 import org.osmdroid.util.GeoPoint
-import android.app.Activity
-import android.content.Intent
-import android.provider.Settings
-import androidx.activity.result.IntentSenderRequest
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Accessible
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.ui.text.style.TextAlign
-import com.google.android.gms.common.api.ResolvableApiException
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
-import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.delay
+import java.util.Calendar
 import java.util.Locale
-import androidx.compose.material.icons.filled.DragHandle
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
-import androidx.compose.ui.input.pointer.pointerInput
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -146,8 +236,16 @@ fun PathfindingScreen(
                         )
                         Spacer(Modifier.width(12.dp))
                         Column {
-                            Text("RailNav", fontWeight = FontWeight.ExtraBold, style = MaterialTheme.typography.titleLarge)
-                            Text("Thane Station Navigator", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f))
+                            Text(
+                                "RailNav",
+                                fontWeight = FontWeight.ExtraBold,
+                                style = MaterialTheme.typography.titleLarge
+                            )
+                            Text(
+                                "Thane Station Navigator",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)
+                            )
                         }
                     }
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
@@ -191,7 +289,12 @@ fun PathfindingScreen(
                         selected = false,
                         onClick = {
                             scope.launch { drawerState.close() }
-                            context.startActivity(Intent(context, TrainScheduleActivity::class.java))
+                            context.startActivity(
+                                Intent(
+                                    context,
+                                    TrainScheduleActivity::class.java
+                                )
+                            )
                         },
                         modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                     )
@@ -218,318 +321,318 @@ fun PathfindingScreen(
                 }
             }
         ) {
-        Box(modifier = modifier.fillMaxSize()) {
+            Box(modifier = modifier.fillMaxSize()) {
 
-            // ── Map ────────────────────────────────────────────────────────
-            MapView(
-                modifier = Modifier.fillMaxSize(),
-                path = uiState.calculatedPath,
-                boundingBox = uiState.pathBoundingBox,
-                onZoomComplete = { mainViewModel.onZoomToPathComplete() },
-                onMapTap = { mainViewModel.setStartNodeByTap(it) },
-                allEdges = mainViewModel.getAllEdges(),
-                allNodes = uiState.allNodeFeatures,
-                onMarkerTap = { mainViewModel.onMarkerTapped(it) },
-                userGpsLocation = uiState.userGpsLocation,
-                isTrackingModeActive = uiState.isTrackingModeActive,
-                onDisableTracking = { mainViewModel.disableTrackingMode() },
-                isDarkTheme = isDarkTheme,
-                startNode = uiState.startNode
-            )
+                // ── Map ────────────────────────────────────────────────────────
+                MapView(
+                    modifier = Modifier.fillMaxSize(),
+                    path = uiState.calculatedPath,
+                    boundingBox = uiState.pathBoundingBox,
+                    onZoomComplete = { mainViewModel.onZoomToPathComplete() },
+                    onMapTap = { mainViewModel.setStartNodeByTap(it) },
+                    allEdges = mainViewModel.getAllEdges(),
+                    allNodes = uiState.allNodeFeatures,
+                    onMarkerTap = { mainViewModel.onMarkerTapped(it) },
+                    userGpsLocation = uiState.userGpsLocation,
+                    isTrackingModeActive = uiState.isTrackingModeActive,
+                    onDisableTracking = { mainViewModel.disableTrackingMode() },
+                    isDarkTheme = isDarkTheme,
+                    startNode = uiState.startNode
+                )
 
-            // ── Top search card ────────────────────────────────────────────
-            AnimatedVisibility(
-                visible = !uiState.isLoading,
-                enter = slideInVertically() + fadeIn(),
-                exit = slideOutVertically() + fadeOut(),
-                modifier = Modifier.align(Alignment.TopCenter)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp)
+                // ── Top search card ────────────────────────────────────────────
+                AnimatedVisibility(
+                    visible = !uiState.isLoading,
+                    enter = slideInVertically() + fadeIn(),
+                    exit = slideOutVertically() + fadeOut(),
+                    modifier = Modifier.align(Alignment.TopCenter)
                 ) {
-                    if (uiState.isAdvancedMode) {
-                        AdvancedSearchCard(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
-                            uiState = uiState,
-                            onStartNodeSelected = { mainViewModel.onStartNodeSelected(it) },
-                            onEndNodeSelected = { mainViewModel.onEndNodeSelected(it) },
-                            onFindPath = {
-                                mainViewModel.findPath()
-                            },
-                            onSearchQueryChanged = { mainViewModel.onSearchQueryChanged(it) },
-                            onSwitchToSimpleMode = { mainViewModel.toggleAdvancedMode() },
-                            // FIX: Passing the viewmodel calls as lambdas to resolve Unresolved References!
-                            onClearStartNode = { mainViewModel.clearStartNode() },
-                            onClearEndNode = { mainViewModel.clearEndNode() },
-                            mainViewModel = mainViewModel
-                        )
-                    } else {
-                        TrainDestinationCard(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
-                            uiState = uiState,
-                            onQueryChange = { mainViewModel.onTrainDestinationQueryChanged(it) },
-                            onShowTrains = { mainViewModel.openTrainSheet() },
-                            onFindPath = {
-                                mainViewModel.findPath()
-                            },
-                            onSwitchToAdvancedMode = { mainViewModel.toggleAdvancedMode() },
-                            onClearStartNode = { mainViewModel.clearStartNode() },
-                            onOpenLiveBoard = { mainViewModel.openLiveBoard() },
-                            onClearTrain = { mainViewModel.clearSelectedTrain() },
-                            onOpenMenu = { scope.launch { drawerState.open() } },
-                        )
-                    }
-
-                    Spacer(Modifier.height(8.dp))
-
-                    FacilityQuickChips(
-                        onChipSelected = { keyword ->
-                            // FIX: Intercept the click and check if we have a starting point
-                            if (uiState.startNode == null) {
-                                android.widget.Toast.makeText(
-                                    context,
-                                    "Please set your location by tapping the map or the GPS icon first.",
-                                    android.widget.Toast.LENGTH_LONG
-                                ).show()
-                            } else {
-                                mainViewModel.routeToNearestFacility(keyword)
-                            }
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 16.dp)
+                    ) {
+                        if (uiState.isAdvancedMode) {
+                            AdvancedSearchCard(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp),
+                                uiState = uiState,
+                                onStartNodeSelected = { mainViewModel.onStartNodeSelected(it) },
+                                onEndNodeSelected = { mainViewModel.onEndNodeSelected(it) },
+                                onFindPath = {
+                                    mainViewModel.findPath()
+                                },
+                                onSearchQueryChanged = { mainViewModel.onSearchQueryChanged(it) },
+                                onSwitchToSimpleMode = { mainViewModel.toggleAdvancedMode() },
+                                // FIX: Passing the viewmodel calls as lambdas to resolve Unresolved References!
+                                onClearStartNode = { mainViewModel.clearStartNode() },
+                                onClearEndNode = { mainViewModel.clearEndNode() },
+                                mainViewModel = mainViewModel
+                            )
+                        } else {
+                            TrainDestinationCard(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp),
+                                uiState = uiState,
+                                onQueryChange = { mainViewModel.onTrainDestinationQueryChanged(it) },
+                                onShowTrains = { mainViewModel.openTrainSheet() },
+                                onFindPath = {
+                                    mainViewModel.findPath()
+                                },
+                                onSwitchToAdvancedMode = { mainViewModel.toggleAdvancedMode() },
+                                onClearStartNode = { mainViewModel.clearStartNode() },
+                                onOpenLiveBoard = { mainViewModel.openLiveBoard() },
+                                onClearTrain = { mainViewModel.clearSelectedTrain() },
+                                onOpenMenu = { scope.launch { drawerState.open() } },
+                            )
                         }
-                    )
 
-                    // ── Map Legend ──────────────────────────────────────────
-                    MapLegend()
+                        Spacer(Modifier.height(8.dp))
 
-                    if (!uiState.isAdvancedMode && uiState.destinationSuggestions.isNotEmpty()) {
-                        StationSuggestionList(
-                            suggestions = uiState.destinationSuggestions,
-                            onSelect = { mainViewModel.onDestinationSelected(it) },
-                            modifier = Modifier.padding(horizontal = 16.dp)
-                        )
-                    }
-
-                    if (uiState.isAdvancedMode && uiState.searchResults.isNotEmpty()) {
-                        SearchResultsList(
-                            results = uiState.searchResults,
-                            userLocation = uiState.userGpsLocation,
-                            onSelect = { mainViewModel.onSearchResultSelected(it) },
-                            modifier = Modifier.padding(horizontal = 16.dp)
-                        )
-                    }
-                }
-            }
-
-            // ---------------- Map Controls ----------------
-            MapControls(
-                isDarkTheme = isDarkTheme,
-                onToggleTheme = { isDarkTheme = !isDarkTheme },
-                onMyLocationClick = {
-                    if (locationHandler.hasLocationPermission()) {
-                        // NEW LOGIC: Ask Google to check settings
-                        locationHandler.checkLocationSettingsAndStart(
-                            onSuccess = {
-                                // GPS is already on
-                                mainViewModel.onGpsButtonClicked()
-                                locationHandler.startLocationUpdates()
-                            },
-                            onResolutionRequired = { resolvableException ->
-                                // GPS is off. Launch the beautiful Google bottom sheet dialog!
-                                try {
-                                    val intentSenderRequest =
-                                        IntentSenderRequest.Builder(resolvableException.resolution)
-                                            .build()
-                                    settingResultRequest.launch(intentSenderRequest)
-                                } catch (_: Exception) {
-                                    // Fallback just in case Google Play Services crashes
-                                    context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+                        FacilityQuickChips(
+                            onChipSelected = { keyword ->
+                                // FIX: Intercept the click and check if we have a starting point
+                                if (uiState.startNode == null) {
+                                    android.widget.Toast.makeText(
+                                        context,
+                                        "Please set your location by tapping the map or the GPS icon first.",
+                                        android.widget.Toast.LENGTH_LONG
+                                    ).show()
+                                } else {
+                                    mainViewModel.routeToNearestFacility(keyword)
                                 }
                             }
                         )
-                    } else {
-                        permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+
+                        // ── Map Legend ──────────────────────────────────────────
+                        MapLegend()
+
+                        if (!uiState.isAdvancedMode && uiState.destinationSuggestions.isNotEmpty()) {
+                            StationSuggestionList(
+                                suggestions = uiState.destinationSuggestions,
+                                onSelect = { mainViewModel.onDestinationSelected(it) },
+                                modifier = Modifier.padding(horizontal = 16.dp)
+                            )
+                        }
+
+                        if (uiState.isAdvancedMode && uiState.searchResults.isNotEmpty()) {
+                            SearchResultsList(
+                                results = uiState.searchResults,
+                                userLocation = uiState.userGpsLocation,
+                                onSelect = { mainViewModel.onSearchResultSelected(it) },
+                                modifier = Modifier.padding(horizontal = 16.dp)
+                            )
+                        }
                     }
-                },
-                onSwapNodes = { mainViewModel.swapNodes() },
-                onFacilities = { mainViewModel.showFacilities() },
-                showSwap = uiState.isAdvancedMode,
-                isAccessiblePreferred = uiState.isAccessibleRoutePreferred,
-                onToggleAccessibility = { mainViewModel.toggleAccessibilityMode() },
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .padding(end = 16.dp)
-            )
-
-            // ── Mini Live Station Board (Peek State) ────────────────────────
-            AnimatedVisibility(
-                // Only show if mini board is enabled, we aren't currently navigating, and the full sheet isn't open
-                visible = uiState.showMiniLiveBoard && uiState.calculatedPath == null && !uiState.showLiveBoardSheet,
-                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
-                modifier = Modifier.align(Alignment.BottomCenter)
-            ) {
-                MiniLiveBoardCard(
-                    onExpand = { mainViewModel.openLiveBoard() },
-                    onClose = { mainViewModel.closeMiniLiveBoard() },
-                    onTrainSelected = { train ->
-                        mainViewModel.onTrainSelected(train)
-                        mainViewModel.closeMiniLiveBoard()
-                    }
-                )
-            }
-
-            // ── Dynamic Turn-By-Turn Banner ────────────────────────────────
-            AnimatedVisibility(
-                visible = uiState.calculatedPath != null,
-                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(16.dp)
-            ) {
-                val currentText =
-                    uiState.instructions.getOrNull(uiState.currentInstructionIndex)?.text
-                        ?: "Loading steps..."
-
-                // NEW: Scan the route for inaccessible steps!
-                val hasInaccessibleSteps = uiState.instructions.any {
-                    it.text.contains("STAIR", ignoreCase = true) ||
-                            it.text.contains("ESCALATOR", ignoreCase = true)
                 }
-                val showWarning = uiState.isAccessibleRoutePreferred && hasInaccessibleSteps
 
-                TurnByTurnCard(
-                    currentInstruction = currentText,
-                    currentIndex = uiState.currentInstructionIndex,
-                    totalInstructions = uiState.instructions.size,
-                    totalDistanceMeters = uiState.totalRouteDistanceMeters,
-                    etaMinutes = uiState.etaMinutes,
-                    showAccessibilityWarning = showWarning, // <-- PASSED DOWN
-                    onNext = { mainViewModel.nextInstruction() },
-                    onPrev = { mainViewModel.prevInstruction() },
-                    onViewList = { showInstructions = true },
-                    onExit = { mainViewModel.clearRoute() }
-                )
-            }
-
-            // ── Loading ────────────────────────────────────────────────────
-            if (uiState.isLoading) {
-                CircularProgressIndicator(Modifier.align(Alignment.Center))
-            }
-
-            // ── Node selection dialog ──────────────────────────────────────
-            if (uiState.showNodeSelectionDialog) {
-                NodeSelectionDialog(
-                    nearestNodes = uiState.nearestNodeCandidates,
-                    userLocation = uiState.userGpsLocation,
-                    onNodeSelected = { mainViewModel.confirmStartNode(it) },
-                    onDismiss = {
-                        mainViewModel.dismissNodeSelectionDialog()
-                        android.widget.Toast.makeText(
-                            context,
-                            "You can also tap directly on the map to set your start point.",
-                            android.widget.Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                )
-            }
-
-            // ── Location permission dialog ─────────────────────────────────
-            if (showPermissionDialog) {
-                LocationPermissionDialog(
-                    onGrant = {
-                        showPermissionDialog = false
-                        permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                // ---------------- Map Controls ----------------
+                MapControls(
+                    isDarkTheme = isDarkTheme,
+                    onToggleTheme = { isDarkTheme = !isDarkTheme },
+                    onMyLocationClick = {
+                        if (locationHandler.hasLocationPermission()) {
+                            // NEW LOGIC: Ask Google to check settings
+                            locationHandler.checkLocationSettingsAndStart(
+                                onSuccess = {
+                                    // GPS is already on
+                                    mainViewModel.onGpsButtonClicked()
+                                    locationHandler.startLocationUpdates()
+                                },
+                                onResolutionRequired = { resolvableException ->
+                                    // GPS is off. Launch the beautiful Google bottom sheet dialog!
+                                    try {
+                                        val intentSenderRequest =
+                                            IntentSenderRequest.Builder(resolvableException.resolution)
+                                                .build()
+                                        settingResultRequest.launch(intentSenderRequest)
+                                    } catch (_: Exception) {
+                                        // Fallback just in case Google Play Services crashes
+                                        context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+                                    }
+                                }
+                            )
+                        } else {
+                            permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                        }
                     },
-                    onDismiss = {
-                        showPermissionDialog = false
-                        android.widget.Toast.makeText(
-                            context,
-                            "You can tap the map to set your location manually.",
-                            android.widget.Toast.LENGTH_SHORT
-                        ).show()
-                    }
+                    onSwapNodes = { mainViewModel.swapNodes() },
+                    onFacilities = { mainViewModel.showFacilities() },
+                    showSwap = uiState.isAdvancedMode,
+                    isAccessiblePreferred = uiState.isAccessibleRoutePreferred,
+                    onToggleAccessibility = { mainViewModel.toggleAccessibilityMode() },
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 16.dp)
                 )
-            }
 
-            // ── Turn-by-turn instructions sheet ───────────────────────────
-            if (showInstructions && uiState.instructions.isNotEmpty()) {
-                ModalBottomSheet(
-                    onDismissRequest = { showInstructions = false },
-                    sheetState = instructionsSheetState,
-                    containerColor = MaterialTheme.colorScheme.surface
+                // ── Mini Live Station Board (Peek State) ────────────────────────
+                AnimatedVisibility(
+                    // Only show if mini board is enabled, we aren't currently navigating, and the full sheet isn't open
+                    visible = uiState.showMiniLiveBoard && uiState.calculatedPath == null && !uiState.showLiveBoardSheet,
+                    enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                    exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
+                    modifier = Modifier.align(Alignment.BottomCenter)
                 ) {
-                    InstructionsSheet(
-                        instructions = uiState.instructions,
-                        startNode = uiState.startNode,
-                        endNode = uiState.endNode,
-                        onClose = { showInstructions = false }
-                    )
-                }
-            }
-
-            // ── Train list sheet ───────────────────────────────────────────
-            if (uiState.showTrainSheet) {
-                ModalBottomSheet(
-                    onDismissRequest = { mainViewModel.dismissTrainSheet() },
-                    sheetState = trainSheetState,
-                    containerColor = MaterialTheme.colorScheme.surface
-                ) {
-                    TrainListSheet(
-                        destination = uiState.selectedDestination ?: "",
-                        trains = uiState.availableTrains,
-                        onTrainSelected = { mainViewModel.onTrainSelected(it) },
-                        onClose = { mainViewModel.dismissTrainSheet() }
-                    )
-                }
-            }
-
-            // ── Facilities sheet ───────────────────────────────────────────
-            if (uiState.showFacilitiesSheet) {
-                ModalBottomSheet(
-                    onDismissRequest = { mainViewModel.dismissFacilities() },
-                    containerColor = MaterialTheme.colorScheme.surface
-                ) {
-                    FacilitiesSheet(
-                        facilities = TrainRepository.facilities,
-                        onFacilitySelect = { mainViewModel.navigateToFacility(it) },
-                        onDismiss = { mainViewModel.dismissFacilities() }
-                    )
-                }
-            }
-
-            // ── Live Station Dashboard Sheet ───────────────────────────────
-            if (uiState.showLiveBoardSheet) {
-                val liveBoardSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
-                ModalBottomSheet(
-                    onDismissRequest = { mainViewModel.closeLiveBoard() },
-                    sheetState = liveBoardSheetState,
-                    containerColor = MaterialTheme.colorScheme.surface
-                ) {
-                    LiveTrainDashboardSheet(
-                        currentDirection = uiState.liveBoardDirection,
-                        onDirectionChanged = { mainViewModel.setLiveBoardDirection(it) },
-                        onClose = { mainViewModel.closeLiveBoard() },
+                    MiniLiveBoardCard(
+                        onExpand = { mainViewModel.openLiveBoard() },
+                        onClose = { mainViewModel.closeMiniLiveBoard() },
                         onTrainSelected = { train ->
                             mainViewModel.onTrainSelected(train)
-                            mainViewModel.closeLiveBoard()
                             mainViewModel.closeMiniLiveBoard()
-                        },
-                        // FIX: Back to the clean, adaptive height restriction
-                        modifier = Modifier.fillMaxHeight(0.85f)
+                        }
                     )
                 }
-            }
+
+                // ── Dynamic Turn-By-Turn Banner ────────────────────────────────
+                AnimatedVisibility(
+                    visible = uiState.calculatedPath != null,
+                    enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                    exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(16.dp)
+                ) {
+                    val currentText =
+                        uiState.instructions.getOrNull(uiState.currentInstructionIndex)?.text
+                            ?: "Loading steps..."
+
+                    // NEW: Scan the route for inaccessible steps!
+                    val hasInaccessibleSteps = uiState.instructions.any {
+                        it.text.contains("STAIR", ignoreCase = true) ||
+                                it.text.contains("ESCALATOR", ignoreCase = true)
+                    }
+                    val showWarning = uiState.isAccessibleRoutePreferred && hasInaccessibleSteps
+
+                    TurnByTurnCard(
+                        currentInstruction = currentText,
+                        currentIndex = uiState.currentInstructionIndex,
+                        totalInstructions = uiState.instructions.size,
+                        totalDistanceMeters = uiState.totalRouteDistanceMeters,
+                        etaMinutes = uiState.etaMinutes,
+                        showAccessibilityWarning = showWarning, // <-- PASSED DOWN
+                        onNext = { mainViewModel.nextInstruction() },
+                        onPrev = { mainViewModel.prevInstruction() },
+                        onViewList = { showInstructions = true },
+                        onExit = { mainViewModel.clearRoute() }
+                    )
+                }
+
+                // ── Loading ────────────────────────────────────────────────────
+                if (uiState.isLoading) {
+                    CircularProgressIndicator(Modifier.align(Alignment.Center))
+                }
+
+                // ── Node selection dialog ──────────────────────────────────────
+                if (uiState.showNodeSelectionDialog) {
+                    NodeSelectionDialog(
+                        nearestNodes = uiState.nearestNodeCandidates,
+                        userLocation = uiState.userGpsLocation,
+                        onNodeSelected = { mainViewModel.confirmStartNode(it) },
+                        onDismiss = {
+                            mainViewModel.dismissNodeSelectionDialog()
+                            android.widget.Toast.makeText(
+                                context,
+                                "You can also tap directly on the map to set your start point.",
+                                android.widget.Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    )
+                }
+
+                // ── Location permission dialog ─────────────────────────────────
+                if (showPermissionDialog) {
+                    LocationPermissionDialog(
+                        onGrant = {
+                            showPermissionDialog = false
+                            permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                        },
+                        onDismiss = {
+                            showPermissionDialog = false
+                            android.widget.Toast.makeText(
+                                context,
+                                "You can tap the map to set your location manually.",
+                                android.widget.Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    )
+                }
+
+                // ── Turn-by-turn instructions sheet ───────────────────────────
+                if (showInstructions && uiState.instructions.isNotEmpty()) {
+                    ModalBottomSheet(
+                        onDismissRequest = { showInstructions = false },
+                        sheetState = instructionsSheetState,
+                        containerColor = MaterialTheme.colorScheme.surface
+                    ) {
+                        InstructionsSheet(
+                            instructions = uiState.instructions,
+                            startNode = uiState.startNode,
+                            endNode = uiState.endNode,
+                            onClose = { showInstructions = false }
+                        )
+                    }
+                }
+
+                // ── Train list sheet ───────────────────────────────────────────
+                if (uiState.showTrainSheet) {
+                    ModalBottomSheet(
+                        onDismissRequest = { mainViewModel.dismissTrainSheet() },
+                        sheetState = trainSheetState,
+                        containerColor = MaterialTheme.colorScheme.surface
+                    ) {
+                        TrainListSheet(
+                            destination = uiState.selectedDestination ?: "",
+                            trains = uiState.availableTrains,
+                            onTrainSelected = { mainViewModel.onTrainSelected(it) },
+                            onClose = { mainViewModel.dismissTrainSheet() }
+                        )
+                    }
+                }
+
+                // ── Facilities sheet ───────────────────────────────────────────
+                if (uiState.showFacilitiesSheet) {
+                    ModalBottomSheet(
+                        onDismissRequest = { mainViewModel.dismissFacilities() },
+                        containerColor = MaterialTheme.colorScheme.surface
+                    ) {
+                        FacilitiesSheet(
+                            facilities = TrainRepository.facilities,
+                            onFacilitySelect = { mainViewModel.navigateToFacility(it) },
+                            onDismiss = { mainViewModel.dismissFacilities() }
+                        )
+                    }
+                }
+
+                // ── Live Station Dashboard Sheet ───────────────────────────────
+                if (uiState.showLiveBoardSheet) {
+                    val liveBoardSheetState =
+                        rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+                    ModalBottomSheet(
+                        onDismissRequest = { mainViewModel.closeLiveBoard() },
+                        sheetState = liveBoardSheetState,
+                        containerColor = MaterialTheme.colorScheme.surface
+                    ) {
+                        LiveTrainDashboardSheet(
+                            currentDirection = uiState.liveBoardDirection,
+                            onDirectionChanged = { mainViewModel.setLiveBoardDirection(it) },
+                            onClose = { mainViewModel.closeLiveBoard() },
+                            onTrainSelected = { train ->
+                                mainViewModel.onTrainSelected(train)
+                                mainViewModel.closeLiveBoard()
+                                mainViewModel.closeMiniLiveBoard()
+                            },
+                            // FIX: Back to the clean, adaptive height restriction
+                            modifier = Modifier.fillMaxHeight(0.85f)
+                        )
+                    }
+                }
 
 
-
-        } // end Box
+            } // end Box
         } // end ModalNavigationDrawer
     } // end RailNavTheme
 }
@@ -717,11 +820,19 @@ fun TrainDestinationCard(
             OutlinedTextField(
                 value = uiState.trainDestinationQuery,
                 onValueChange = onQueryChange,
-                placeholder = { Text("Station  (e.g. Kalyan, Kurla, CSMT…)", style = MaterialTheme.typography.bodySmall) },
+                placeholder = {
+                    Text(
+                        "Station  (e.g. Kalyan, Kurla, CSMT…)",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                },
                 leadingIcon = { Icon(Icons.Default.Train, null, modifier = Modifier.size(20.dp)) },
                 trailingIcon = {
                     if (uiState.trainDestinationQuery.isNotBlank()) {
-                        IconButton(onClick = { onQueryChange("") }, modifier = Modifier.size(32.dp)) {
+                        IconButton(
+                            onClick = { onQueryChange("") },
+                            modifier = Modifier.size(32.dp)
+                        ) {
                             Icon(
                                 Icons.Default.Clear,
                                 "Clear",
@@ -730,7 +841,9 @@ fun TrainDestinationCard(
                         }
                     }
                 },
-                modifier = Modifier.fillMaxWidth().height(48.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     // FIX: Replaced hardcoded grey with adaptive surfaceVariant
@@ -947,9 +1060,11 @@ fun TrainListSheet(
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false),
         containerColor = MaterialTheme.colorScheme.surface
     ) {
-        Column(Modifier
-            .fillMaxWidth()
-            .padding(16.dp)) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
             Text(
                 "Upcoming Trains to $destination",
                 style = MaterialTheme.typography.titleLarge,
@@ -1281,7 +1396,9 @@ fun AdvancedSearchCard(
                 onValueChange = onSearchQueryChanged,
                 placeholder = { Text("Search node…", style = MaterialTheme.typography.bodySmall) },
                 leadingIcon = { Icon(Icons.Default.Search, null, modifier = Modifier.size(20.dp)) },
-                modifier = Modifier.fillMaxWidth().height(48.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
                 shape = RoundedCornerShape(12.dp),
                 singleLine = true,
                 textStyle = MaterialTheme.typography.bodySmall
@@ -1645,9 +1762,11 @@ fun InstructionsSheet(
                 // FIX: Removed color = Color.Black
             )
 
-            LazyColumn(modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp)) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp)
+            ) {
                 itemsIndexed(instructions) { index, instruction ->
                     Row(
                         modifier = Modifier.padding(vertical = 12.dp),
@@ -1872,9 +1991,11 @@ fun DestinationsSheet(
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false),
         containerColor = MaterialTheme.colorScheme.surface
     ) {
-        Column(Modifier
-            .fillMaxWidth()
-            .padding(16.dp)) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
             Text(
                 "Where are you going?",
                 style = MaterialTheme.typography.titleLarge,
@@ -1947,7 +2068,8 @@ fun LiveTrainDashboardSheet(
     LaunchedEffect(Unit) {
         while (true) {
             val cal = java.util.Calendar.getInstance()
-            currentMinutes = cal.get(java.util.Calendar.HOUR_OF_DAY) * 60 + cal.get(java.util.Calendar.MINUTE)
+            currentMinutes =
+                cal.get(java.util.Calendar.HOUR_OF_DAY) * 60 + cal.get(java.util.Calendar.MINUTE)
             kotlinx.coroutines.delay(15000)
         }
     }
@@ -1975,7 +2097,9 @@ fun LiveTrainDashboardSheet(
         Surface(
             color = MaterialTheme.colorScheme.surfaceVariant,
             shape = RoundedCornerShape(24.dp),
-            modifier = Modifier.fillMaxWidth().height(48.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp)
         ) {
             Row(modifier = Modifier.fillMaxSize()) {
                 TrainDirection.entries.forEach { dir ->
@@ -2010,13 +2134,18 @@ fun LiveTrainDashboardSheet(
         Spacer(Modifier.height(16.dp))
 
         LazyColumn(
-            modifier = Modifier.fillMaxWidth().weight(1f),
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
             contentPadding = PaddingValues(bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(activeTrains, key = { it.trainNumber }) { train ->
                 // FIX: Passed the selection callback down
-                LiveTrainCard(train = train, currentMinutes = currentMinutes, onClick = { onTrainSelected(train) })
+                LiveTrainCard(
+                    train = train,
+                    currentMinutes = currentMinutes,
+                    onClick = { onTrainSelected(train) })
             }
         }
     }
@@ -2037,13 +2166,17 @@ fun LiveTrainCard(train: TrainSchedule, currentMinutes: Int, onClick: () -> Unit
     val typeColor = Color(train.type.color)
 
     Card(
-        modifier = Modifier.fillMaxWidth().clickable { onClick() },
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
         shape = RoundedCornerShape(12.dp),
         // FIX: Tint the entire card background to match the train type!
         colors = CardDefaults.cardColors(containerColor = typeColor.copy(alpha = 0.08f))
     ) {
         Row(
-            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.width(84.dp)) {
@@ -2169,7 +2302,8 @@ fun MiniLiveBoardCard(
     LaunchedEffect(Unit) {
         while (true) {
             val cal = java.util.Calendar.getInstance()
-            currentMinutes = cal.get(java.util.Calendar.HOUR_OF_DAY) * 60 + cal.get(java.util.Calendar.MINUTE)
+            currentMinutes =
+                cal.get(java.util.Calendar.HOUR_OF_DAY) * 60 + cal.get(java.util.Calendar.MINUTE)
             kotlinx.coroutines.delay(15000)
         }
     }
@@ -2211,14 +2345,25 @@ fun MiniLiveBoardCard(
     ) {
         Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
             Row(
-                modifier = Modifier.fillMaxWidth().clickable { onExpand() },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onExpand() },
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.DragHandle, contentDescription = "Pull up", modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Icon(
+                        Icons.Default.DragHandle,
+                        contentDescription = "Pull up",
+                        modifier = Modifier.size(20.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                     Spacer(Modifier.width(6.dp))
-                    Text("Next Departures", fontWeight = FontWeight.ExtraBold, style = MaterialTheme.typography.titleSmall)
+                    Text(
+                        "Next Departures",
+                        fontWeight = FontWeight.ExtraBold,
+                        style = MaterialTheme.typography.titleSmall
+                    )
                 }
                 IconButton(onClick = onClose, modifier = Modifier.size(24.dp)) {
                     Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Hide Board")
@@ -2228,9 +2373,27 @@ fun MiniLiveBoardCard(
             Spacer(Modifier.height(8.dp))
 
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                MiniTrainBox(TrainDirection.UP, upTrain, currentMinutes, onTrainSelected, Modifier.weight(1f))
-                MiniTrainBox(TrainDirection.DOWN, downTrain, currentMinutes, onTrainSelected, Modifier.weight(1f))
-                MiniTrainBox(TrainDirection.HARBOUR, harbourTrain, currentMinutes, onTrainSelected, Modifier.weight(1f))
+                MiniTrainBox(
+                    TrainDirection.UP,
+                    upTrain,
+                    currentMinutes,
+                    onTrainSelected,
+                    Modifier.weight(1f)
+                )
+                MiniTrainBox(
+                    TrainDirection.DOWN,
+                    downTrain,
+                    currentMinutes,
+                    onTrainSelected,
+                    Modifier.weight(1f)
+                )
+                MiniTrainBox(
+                    TrainDirection.HARBOUR,
+                    harbourTrain,
+                    currentMinutes,
+                    onTrainSelected,
+                    Modifier.weight(1f)
+                )
             }
             Spacer(Modifier.height(4.dp))
         }
@@ -2238,7 +2401,13 @@ fun MiniLiveBoardCard(
 }
 
 @Composable
-fun MiniTrainBox(direction: TrainDirection, train: TrainSchedule?, currentMinutes: Int, onClick: (TrainSchedule) -> Unit, modifier: Modifier = Modifier) {
+fun MiniTrainBox(
+    direction: TrainDirection,
+    train: TrainSchedule?,
+    currentMinutes: Int,
+    onClick: (TrainSchedule) -> Unit,
+    modifier: Modifier = Modifier
+) {
     val bgColor = if (train != null) {
         Color(train.type.color).copy(alpha = 0.08f)
     } else {
@@ -2255,7 +2424,8 @@ fun MiniTrainBox(direction: TrainDirection, train: TrainSchedule?, currentMinute
                 var diff = train.departureMinutes - currentMinutes
                 if (diff < -720) diff += 1440
 
-                val statusColor = if (diff <= 5) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+                val statusColor =
+                    if (diff <= 5) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
                 val typeColor = Color(train.type.color)
 
                 // ── Top row: Destination + PF ──
