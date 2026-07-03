@@ -19,7 +19,8 @@ object MapUtils {
         val key = "${resId}_${color}_${sizeDp}"
         iconCache.get(key)?.let { return it }
 
-        val drawable = ContextCompat.getDrawable(context, resId) ?: return Color.TRANSPARENT.toDrawable()
+        val drawable =
+            ContextCompat.getDrawable(context, resId) ?: return Color.TRANSPARENT.toDrawable()
         val wrapped = DrawableCompat.wrap(drawable).mutate()
         DrawableCompat.setTint(wrapped, color)
 
@@ -37,9 +38,27 @@ object MapUtils {
         iconCache.get(type)?.let { return it }
 
         val drawable = when (type) {
-            "START" -> getThemedIcon(context, com.app.railnav.R.drawable.location, Color.parseColor("#4CAF50"), 42)
-            "END" -> getThemedIcon(context, com.app.railnav.R.drawable.location, Color.parseColor("#F44336"), 42)
-            "GPS" -> getThemedIcon(context, com.app.railnav.R.drawable.gps_on, Color.parseColor("#2196F3"), 28)
+            "START" -> getThemedIcon(
+                context,
+                com.app.railnav.R.drawable.location,
+                Color.parseColor("#4CAF50"),
+                42
+            )
+
+            "END" -> getThemedIcon(
+                context,
+                com.app.railnav.R.drawable.location,
+                Color.parseColor("#F44336"),
+                42
+            )
+
+            "GPS" -> getThemedIcon(
+                context,
+                com.app.railnav.R.drawable.gps_on,
+                Color.parseColor("#2196F3"),
+                28
+            )
+
             else -> return null
         }
 
@@ -50,7 +69,12 @@ object MapUtils {
     /**
      * Handles all station facility nodes and generic pathways
      */
-    fun getNodeIcon(context: Context, nodeType: String, searchStr: String, themeColor: Int): Drawable {
+    fun getNodeIcon(
+        context: Context,
+        nodeType: String,
+        searchStr: String,
+        themeColor: Int
+    ): Drawable {
         return when {
             // STRICT MATCH: Only show entry icon if the type is exactly "ENTRY/EXIT"
             nodeType == "ENTRY/EXIT" ->
@@ -61,7 +85,12 @@ object MapUtils {
 
             else ->
                 // Generic pathway nodes are kept tiny (8dp) so they don't clutter the map
-                getThemedIcon(context, org.osmdroid.library.R.drawable.ic_menu_mylocation, Color.GRAY, 8)
+                getThemedIcon(
+                    context,
+                    org.osmdroid.library.R.drawable.ic_menu_mylocation,
+                    Color.GRAY,
+                    8
+                )
         }
     }
 }

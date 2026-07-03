@@ -5,18 +5,58 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.DynamicFeed
+import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -75,7 +115,8 @@ class LiveStationViewModel : ViewModel() {
                     _state.value = LiveStationUiState.Error("No data found for station $src")
                 }
             } catch (e: Exception) {
-                _state.value = LiveStationUiState.Error(e.message ?: "Network error. Check connection.")
+                _state.value =
+                    LiveStationUiState.Error(e.message ?: "Network error. Check connection.")
             }
         }
     }
@@ -170,7 +211,9 @@ fun LiveStationScreen(
             ) {
                 OutlinedTextField(
                     value = stationInput,
-                    onValueChange = { stationInput = it.uppercase().filter { c -> c.isLetterOrDigit() }.take(8) },
+                    onValueChange = {
+                        stationInput = it.uppercase().filter { c -> c.isLetterOrDigit() }.take(8)
+                    },
                     placeholder = { Text("Station Code (e.g. TNA)") },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp),
@@ -184,7 +227,12 @@ fun LiveStationScreen(
                 )
                 IconButton(
                     onClick = {
-                        viewModel.fetchBoard(stationInput, selectedHours, destInput.ifBlank { null }, context)
+                        viewModel.fetchBoard(
+                            stationInput,
+                            selectedHours,
+                            destInput.ifBlank { null },
+                            context
+                        )
                     },
                     modifier = Modifier
                         .size(56.dp)
@@ -216,7 +264,9 @@ fun LiveStationScreen(
             if (showDestField) {
                 OutlinedTextField(
                     value = destInput,
-                    onValueChange = { destInput = it.uppercase().filter { c -> c.isLetterOrDigit() }.take(8) },
+                    onValueChange = {
+                        destInput = it.uppercase().filter { c -> c.isLetterOrDigit() }.take(8)
+                    },
                     placeholder = { Text("Destination Code (optional)") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
@@ -260,7 +310,12 @@ fun LiveStationScreen(
                         AssistChip(
                             onClick = {
                                 stationInput = code
-                                viewModel.fetchBoard(code, selectedHours, destInput.ifBlank { null }, context)
+                                viewModel.fetchBoard(
+                                    code,
+                                    selectedHours,
+                                    destInput.ifBlank { null },
+                                    context
+                                )
                             },
                             label = { Text(code, style = MaterialTheme.typography.labelSmall) },
                             leadingIcon = {
@@ -296,7 +351,10 @@ fun LiveStationScreen(
 
                 is LiveStationUiState.Loading -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
                             CircularProgressIndicator()
                             Text(
                                 "Fetching live data…",
@@ -309,7 +367,10 @@ fun LiveStationScreen(
 
                 is LiveStationUiState.Error -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
                             Icon(
                                 Icons.Default.ErrorOutline, null,
                                 modifier = Modifier.size(52.dp),

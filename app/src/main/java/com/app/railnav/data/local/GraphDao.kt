@@ -26,11 +26,13 @@ interface GraphDao {
 
     // Search Method (Replaces SearchUtils)
     // Finds nodes where the name OR the type matches the search query.
-    @Query("""
+    @Query(
+        """
         SELECT * FROM nodes 
         WHERE name LIKE '%' || :query || '%' 
         OR type LIKE '%' || :query || '%'
-    """)
+    """
+    )
     suspend fun searchNodes(query: String): List<NodeEntity>
 
     // Utility: Check if DB is empty to know if we need to seed data

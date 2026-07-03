@@ -6,7 +6,17 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -15,9 +25,35 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.ConfirmationNumber
+import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Train
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -165,7 +201,9 @@ fun PnrStatusScreen(
             ) {
                 OutlinedTextField(
                     value = pnrInput,
-                    onValueChange = { if (it.length <= 10) pnrInput = it.filter { c -> c.isDigit() } },
+                    onValueChange = {
+                        if (it.length <= 10) pnrInput = it.filter { c -> c.isDigit() }
+                    },
                     placeholder = { Text("Enter 10-digit PNR number") },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp),
@@ -243,7 +281,10 @@ fun PnrStatusScreen(
 
                 is PnrUiState.Error -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
                             Icon(
                                 Icons.Default.ErrorOutline, null,
                                 modifier = Modifier.size(52.dp),
@@ -317,7 +358,11 @@ private fun PnrResultView(data: PnrData) {
                     }
 
                     Spacer(Modifier.height(14.dp))
-                    HorizontalDivider(color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.15f))
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(
+                            alpha = 0.15f
+                        )
+                    )
                     Spacer(Modifier.height(14.dp))
 
                     // Route row
@@ -325,7 +370,10 @@ private fun PnrResultView(data: PnrData) {
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column(horizontalAlignment = Alignment.Start, modifier = Modifier.weight(1f)) {
+                        Column(
+                            horizontalAlignment = Alignment.Start,
+                            modifier = Modifier.weight(1f)
+                        ) {
                             Text(
                                 "FROM",
                                 style = MaterialTheme.typography.labelSmall,
@@ -358,7 +406,10 @@ private fun PnrResultView(data: PnrData) {
                             )
                         }
 
-                        Column(horizontalAlignment = Alignment.End, modifier = Modifier.weight(1f)) {
+                        Column(
+                            horizontalAlignment = Alignment.End,
+                            modifier = Modifier.weight(1f)
+                        ) {
                             Text(
                                 "TO",
                                 style = MaterialTheme.typography.labelSmall,
@@ -380,7 +431,11 @@ private fun PnrResultView(data: PnrData) {
                     }
 
                     Spacer(Modifier.height(14.dp))
-                    HorizontalDivider(color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.15f))
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(
+                            alpha = 0.15f
+                        )
+                    )
                     Spacer(Modifier.height(12.dp))
 
                     // Journey details
@@ -420,7 +475,9 @@ private fun PnrResultView(data: PnrData) {
         item {
             Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
                 Row(
-                    modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
@@ -572,7 +629,11 @@ private fun PnrResultView(data: PnrData) {
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Ratings", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                        Text(
+                            "Ratings",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold
+                        )
                         Text(
                             "${data.ratings.ratingCount} reviews",
                             style = MaterialTheme.typography.labelSmall,

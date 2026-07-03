@@ -3,19 +3,17 @@ package com.app.railnav
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
-import android.location.Location
-import android.location.LocationListener
 import android.location.LocationManager
-import android.os.Bundle
 import androidx.core.content.ContextCompat
+import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.LocationSettingsRequest
 import com.google.android.gms.location.Priority
 import org.osmdroid.util.GeoPoint
-import com.google.android.gms.location.LocationSettingsRequest
-import com.google.android.gms.common.api.ResolvableApiException
+
 class LocationHandler(
     private val context: Context,
     private val onLocationReceived: (GeoPoint) -> Unit,
@@ -29,6 +27,7 @@ class LocationHandler(
             Manifest.permission.ACCESS_FINE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
     }
+
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(locationResult: LocationResult) {
             locationResult.lastLocation?.let {

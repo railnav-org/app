@@ -2,8 +2,6 @@ package com.app.railnav.data
 
 import android.content.Context
 import com.app.railnav.data.local.RailNavDatabase
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 
 object GraphRepository {
 
@@ -33,7 +31,7 @@ object GraphRepository {
 
         // Failsafe in case loadEdges runs before loadNodes
         RailNavDatabase.seedDatabaseIfEmpty(context, db)
-        
+
         val entities = db.graphDao().getAllEdges()
 
         return entities.map { entity ->

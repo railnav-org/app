@@ -1,16 +1,23 @@
 package com.app.railnav
 
 import android.graphics.Color
+import android.view.MotionEvent
 import android.view.View
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import com.app.railnav.data.*
+import com.app.railnav.data.EdgeFeature
+import com.app.railnav.data.GraphNode
+import com.app.railnav.data.MapUtils
+import com.app.railnav.data.NodeFeature
 import kotlinx.coroutines.delay
 import org.osmdroid.config.Configuration
 import org.osmdroid.events.MapEventsReceiver
@@ -23,9 +30,8 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.MapEventsOverlay
 import org.osmdroid.views.overlay.Marker
-import org.osmdroid.views.overlay.Polyline
-import android.view.MotionEvent
 import org.osmdroid.views.overlay.Overlay
+import org.osmdroid.views.overlay.Polyline
 
 @Composable
 fun MapView(
@@ -75,20 +81,24 @@ fun MapView(
             // =================================================================
             if (isDarkTheme) {
                 // Creates a sleek, dark-blue inverted look (Standard Dark Mode)
-                val inverseMatrix = android.graphics.ColorMatrix(floatArrayOf(
-                    -1.0f,  0.0f,  0.0f,  0.0f, 255.0f,
-                    0.0f, -1.0f,  0.0f,  0.0f, 255.0f,
-                    0.0f,  0.0f, -1.0f,  0.0f, 255.0f,
-                    0.0f,  0.0f,  0.0f,  1.0f,   0.0f
-                ))
+                val inverseMatrix = android.graphics.ColorMatrix(
+                    floatArrayOf(
+                        -1.0f, 0.0f, 0.0f, 0.0f, 255.0f,
+                        0.0f, -1.0f, 0.0f, 0.0f, 255.0f,
+                        0.0f, 0.0f, -1.0f, 0.0f, 255.0f,
+                        0.0f, 0.0f, 0.0f, 1.0f, 0.0f
+                    )
+                )
 
                 // Optional: Tint it slightly blue so it's not purely harsh black/white
-                val tintMatrix = android.graphics.ColorMatrix(floatArrayOf(
-                    0.8f, 0.0f, 0.0f, 0.0f, 0.0f, // Red
-                    0.0f, 0.9f, 0.0f, 0.0f, 0.0f, // Green
-                    0.0f, 0.0f, 1.2f, 0.0f, 0.0f, // Blue
-                    0.0f, 0.0f, 0.0f, 1.0f, 0.0f  // Alpha
-                ))
+                val tintMatrix = android.graphics.ColorMatrix(
+                    floatArrayOf(
+                        0.8f, 0.0f, 0.0f, 0.0f, 0.0f, // Red
+                        0.0f, 0.9f, 0.0f, 0.0f, 0.0f, // Green
+                        0.0f, 0.0f, 1.2f, 0.0f, 0.0f, // Blue
+                        0.0f, 0.0f, 0.0f, 1.0f, 0.0f  // Alpha
+                    )
+                )
 
                 inverseMatrix.postConcat(tintMatrix)
                 val filter = android.graphics.ColorMatrixColorFilter(inverseMatrix)
@@ -157,11 +167,15 @@ fun MapView(
             // 2. Draw Active Path
             if (path != null && path.size > 1) {
                 val edgeMap = allEdges.associateBy {
-                    Pair(it.properties.start_id.trim().toIntOrNull() ?: 0, it.properties.end_id.trim().toIntOrNull() ?: 0)
+                    Pair(
+                        it.properties.start_id.trim().toIntOrNull() ?: 0,
+                        it.properties.end_id.trim().toIntOrNull() ?: 0
+                    )
                 }
 
                 for (i in 0 until path.size - 1) {
-                    val edge = edgeMap[Pair(path[i].properties.node_id, path[i+1].properties.node_id)]
+                    val edge =
+                        edgeMap[Pair(path[i].properties.node_id, path[i + 1].properties.node_id)]
                     if (edge != null) {
                         val points = edge.geometry.coordinates.map { GeoPoint(it[1], it[0]) }
 
@@ -225,7 +239,10 @@ fun MapView(
                     isEnabled = when {
                         currentZoom < 16.0 -> false
                         isEntryExit -> currentZoom >= 16.0
-                        searchStr.contains("LIFT") || searchStr.contains("ELEVATOR") || searchStr.contains("TICKET") -> currentZoom >= 17.5
+                        searchStr.contains("LIFT") || searchStr.contains("ELEVATOR") || searchStr.contains(
+                            "TICKET"
+                        ) -> currentZoom >= 17.5
+
                         else -> currentZoom >= 19.5
                     }
 
@@ -256,7 +273,10 @@ fun rememberMapViewWithLifecycle(onMapTap: (GeoPoint) -> Unit): MapView {
             controller.setCenter(GeoPoint(19.186, 72.975))
 
             overlays.add(0, MapEventsOverlay(object : MapEventsReceiver {
-                override fun singleTapConfirmedHelper(p: GeoPoint?): Boolean { p?.let { onMapTap(it) }; return true }
+                override fun singleTapConfirmedHelper(p: GeoPoint?): Boolean {
+                    p?.let { onMapTap(it) }; return true
+                }
+
                 override fun longPressHelper(p: GeoPoint?): Boolean = false
             }))
 
@@ -271,12 +291,16 @@ fun rememberMapViewWithLifecycle(onMapTap: (GeoPoint) -> Unit): MapView {
                         if (typeStr == "SYSTEM_MARKER") {
                             marker.isEnabled = true
                         } else {
-                            val isEntryExit = typeStr.startsWith("ENTRY/EXIT ") || typeStr == "ENTRY/EXIT"
+                            val isEntryExit =
+                                typeStr.startsWith("ENTRY/EXIT ") || typeStr == "ENTRY/EXIT"
 
                             marker.isEnabled = when {
                                 zoom < 16.0 -> false
                                 isEntryExit -> zoom >= 16.0
-                                typeStr.contains("LIFT") || typeStr.contains("ELEVATOR") || typeStr.contains("TICKET") -> zoom >= 17.5
+                                typeStr.contains("LIFT") || typeStr.contains("ELEVATOR") || typeStr.contains(
+                                    "TICKET"
+                                ) -> zoom >= 17.5
+
                                 else -> zoom >= 19.5
                             }
                         }

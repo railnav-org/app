@@ -1,7 +1,10 @@
 package com.app.railnav.data
 
 import java.util.PriorityQueue
-import kotlin.math.*
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 class Pathfinder(private val graph: Graph) {
 
@@ -15,19 +18,25 @@ class Pathfinder(private val graph: Graph) {
         val lat2Rad = Math.toRadians(lat2)
         val dLat = Math.toRadians(lat2 - lat1)
         val dLon = Math.toRadians(lon2 - lon1)
-        val a = sin(dLat / 2) * sin(dLat / 2) + cos(lat1Rad) * cos(lat2Rad) * sin(dLon / 2) * sin(dLon / 2)
+        val a =
+            sin(dLat / 2) * sin(dLat / 2) + cos(lat1Rad) * cos(lat2Rad) * sin(dLon / 2) * sin(dLon / 2)
         val c = 2 * atan2(sqrt(a), sqrt(1 - a))
         return earthRadius * c
     }
 
     // FIX: Added 'isAccessiblePreferred' with a default value of false
-    fun findShortestPath(startNodeId: Int, endNodeId: Int, isAccessiblePreferred: Boolean = false): List<GraphNode>? {
+    fun findShortestPath(
+        startNodeId: Int,
+        endNodeId: Int,
+        isAccessiblePreferred: Boolean = false
+    ): List<GraphNode>? {
         val startNode = graph.getNodeById(startNodeId)
         val endNode = graph.getNodeById(endNodeId)
         if (startNode == null || endNode == null) return null
 
         val cameFrom = mutableMapOf<GraphNode, GraphNode>()
-        val costFromStart = mutableMapOf<GraphNode, Double>().withDefault { Double.POSITIVE_INFINITY }
+        val costFromStart =
+            mutableMapOf<GraphNode, Double>().withDefault { Double.POSITIVE_INFINITY }
         costFromStart[startNode] = 0.0
 
         val openSet = PriorityQueue<GraphNode> { a, b ->
@@ -50,7 +59,10 @@ class Pathfinder(private val graph: Graph) {
                 val currentLevel = current.properties.node_level
                 val neighborLevel = neighborNode.properties.node_level
                 val isVertical = edgeProps.edge_type?.let {
-                    it.contains("STAIR", true) || it.contains("LIFT", true) || it.contains("ESCALATOR", true)
+                    it.contains("STAIR", true) || it.contains(
+                        "LIFT",
+                        true
+                    ) || it.contains("ESCALATOR", true)
                 } ?: false
 
                 if (currentLevel != neighborLevel && !isVertical) return@forEach
@@ -59,9 +71,10 @@ class Pathfinder(private val graph: Graph) {
                 // NEW: ACCESSIBILITY COST LOGIC
                 // =================================================================
                 val weightMultiplier = if (isAccessiblePreferred) {
-                    val isInaccessible = edgeProps.edge_accessibilty.equals("NO", ignoreCase = true) ||
-                            edgeProps.edge_type?.contains("STAIR", true) == true ||
-                            edgeProps.edge_type?.contains("ESCALATOR", true) == true
+                    val isInaccessible =
+                        edgeProps.edge_accessibilty.equals("NO", ignoreCase = true) ||
+                                edgeProps.edge_type?.contains("STAIR", true) == true ||
+                                edgeProps.edge_type?.contains("ESCALATOR", true) == true
                     if (isInaccessible) 10000.0 else 1.0 // Massive 10,000x penalty to avoid stairs
                 } else {
                     // Standard Mode: Just slightly penalize stairs to prefer flat paths
@@ -69,7 +82,8 @@ class Pathfinder(private val graph: Graph) {
                 }
                 // =================================================================
 
-                val tentativeGScore = costFromStart.getValue(current) + (distance * weightMultiplier)
+                val tentativeGScore =
+                    costFromStart.getValue(current) + (distance * weightMultiplier)
 
                 if (tentativeGScore < costFromStart.getValue(neighborNode)) {
                     cameFrom[neighborNode] = current
@@ -81,7 +95,10 @@ class Pathfinder(private val graph: Graph) {
         return null
     }
 
-    private fun reconstructPath(cameFrom: Map<GraphNode, GraphNode>, current: GraphNode): List<GraphNode> {
+    private fun reconstructPath(
+        cameFrom: Map<GraphNode, GraphNode>,
+        current: GraphNode
+    ): List<GraphNode> {
         val totalPath = mutableListOf(current)
         var currentStep = current
         while (currentStep in cameFrom.keys) {
