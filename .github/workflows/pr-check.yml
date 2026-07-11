@@ -1,0 +1,38 @@
+name: Android PR Check
+
+# 1. WHEN SHOULD THIS RUN?
+# This tells GitHub to trigger this action whenever a Pull Request is opened or updated targeting the 'main' branch.
+on:
+  pull_request:
+    branches: [ "central" ]
+
+# 2. WHAT SHOULD IT DO?
+jobs:
+  build-and-lint:
+    # GitHub will provide a free, temporary Linux server to run your checks
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step A: Download your repository's code onto the temporary server
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Step B: Install Java 17 (Required for modern Android/Kotlin development)
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle # This caches Gradle dependencies to make future runs much faster
+
+      # Step C: A common fix for Windows developers - ensures the build script can be executed on Linux
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      # Step D: Run Android Lint (Checks for potential bugs, memory leaks, and accessibility issues)
+      - name: Run Android Lint
+        run: ./gradlew lintDebug
+
+      # Step E: Actually compile the app (Ensures the PR doesn't contain code that crashes the build)
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug
