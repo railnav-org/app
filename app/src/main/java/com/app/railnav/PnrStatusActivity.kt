@@ -99,7 +99,6 @@ class PnrViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val response = RetrofitClient.api.getPnrStatus(
-                    apiKey = ApiConfig.RAPID_API_KEY,
                     pnrNumber = pnr
                 )
                 if (response.success && response.data != null) {

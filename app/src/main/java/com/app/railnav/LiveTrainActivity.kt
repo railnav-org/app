@@ -104,7 +104,6 @@ class LiveTrainViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val response = RetrofitClient.api.getLiveTrainStatus(
-                    apiKey = ApiConfig.RAPID_API_KEY,
                     trainNumber = number,
                     startDay = startDay
                 )

@@ -103,7 +103,6 @@ class LiveStationViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val response = RetrofitClient.api.getLiveStationBoard(
-                    apiKey = ApiConfig.RAPID_API_KEY,
                     source = src,
                     hours = hours,
                     destination = destination?.trim()?.uppercase()?.ifBlank { null }
