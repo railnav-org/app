@@ -113,10 +113,8 @@ import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -143,8 +141,6 @@ import com.app.railnav.data.TrainSchedule
 import com.app.railnav.ui.theme.RailNavTheme
 import kotlinx.coroutines.launch
 import org.osmdroid.util.GeoPoint
-import java.util.Calendar
-import java.util.Locale
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -164,6 +160,8 @@ fun PathfindingScreen(
     mainViewModel: MainViewModel = viewModel()
 ) {
     val uiState by mainViewModel.uiState.collectAsState()
+    val currentMinutes by mainViewModel.currentMinutes.collectAsState()
+    val currentTimeFormatted by mainViewModel.currentTimeFormatted.collectAsState()
     val instructionsSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     val trainSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     val scope = rememberCoroutineScope()
@@ -477,6 +475,7 @@ fun PathfindingScreen(
                     modifier = Modifier.align(Alignment.BottomCenter)
                 ) {
                     MiniLiveBoardCard(
+                        currentMinutes = currentMinutes,
                         onExpand = { mainViewModel.openLiveBoard() },
                         onClose = { mainViewModel.closeMiniLiveBoard() },
                         onTrainSelected = { train ->
@@ -618,6 +617,8 @@ fun PathfindingScreen(
                     ) {
                         LiveTrainDashboardSheet(
                             currentDirection = uiState.liveBoardDirection,
+                            currentMinutes = currentMinutes,
+                            currentTimeFormatted = currentTimeFormatted,
                             onDirectionChanged = { mainViewModel.setLiveBoardDirection(it) },
                             onClose = { mainViewModel.closeLiveBoard() },
                             onTrainSelected = { train ->
@@ -2058,21 +2059,13 @@ fun DestinationsSheet(
 @Composable
 fun LiveTrainDashboardSheet(
     currentDirection: TrainDirection,
+    currentMinutes: Int,
+    currentTimeFormatted: String,
     onDirectionChanged: (TrainDirection) -> Unit,
     onClose: () -> Unit,
     onTrainSelected: (TrainSchedule) -> Unit, // <-- NEW PARAMETER
     modifier: Modifier = Modifier
 ) {
-    var currentMinutes by remember { mutableIntStateOf(TrainRepository.currentMinutes()) }
-
-    LaunchedEffect(Unit) {
-        while (true) {
-            val cal = java.util.Calendar.getInstance()
-            currentMinutes =
-                cal.get(java.util.Calendar.HOUR_OF_DAY) * 60 + cal.get(java.util.Calendar.MINUTE)
-            kotlinx.coroutines.delay(15000)
-        }
-    }
 
     val activeTrains = remember(currentDirection, currentMinutes) {
         TrainRepository.schedule
@@ -2090,7 +2083,7 @@ fun LiveTrainDashboardSheet(
     }
 
     Column(modifier = modifier.padding(horizontal = 16.dp)) {
-        LiveClockHeader(onClose = onClose)
+        LiveClockHeader(onClose = onClose, currentTimeFormatted)
         Spacer(Modifier.height(16.dp))
 
         // Direction Switcher
@@ -2246,20 +2239,7 @@ fun LiveTrainCard(train: TrainSchedule, currentMinutes: Int, onClick: () -> Unit
 }
 
 @Composable
-fun LiveClockHeader(onClose: () -> Unit) {
-    var currentTimeFormatted by remember { mutableStateOf("") }
-
-    // This loop ticks every second, but NOW it ONLY recomposes this tiny header!
-    LaunchedEffect(Unit) {
-        while (true) {
-            val cal = Calendar.getInstance()
-            val hh = String.format(Locale.US, "%02d", cal.get(Calendar.HOUR_OF_DAY))
-            val mm = String.format(Locale.US, "%02d", cal.get(Calendar.MINUTE))
-            val ss = String.format(Locale.US, "%02d", cal.get(Calendar.SECOND))
-            currentTimeFormatted = "$hh:$mm:$ss"
-            kotlinx.coroutines.delay(1000)
-        }
-    }
+fun LiveClockHeader(onClose: () -> Unit, currentTimeFormatted: String) {
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -2292,22 +2272,12 @@ fun LiveClockHeader(onClose: () -> Unit) {
 
 @Composable
 fun MiniLiveBoardCard(
+    currentMinutes: Int,
     onExpand: () -> Unit,
     onClose: () -> Unit,
     onTrainSelected: (TrainSchedule) -> Unit, // <-- NEW PARAMETER
     modifier: Modifier = Modifier
 ) {
-    var currentMinutes by remember { mutableIntStateOf(TrainRepository.currentMinutes()) }
-
-    LaunchedEffect(Unit) {
-        while (true) {
-            val cal = java.util.Calendar.getInstance()
-            currentMinutes =
-                cal.get(java.util.Calendar.HOUR_OF_DAY) * 60 + cal.get(java.util.Calendar.MINUTE)
-            kotlinx.coroutines.delay(15000)
-        }
-    }
-
     fun getNextTrain(dir: TrainDirection): TrainSchedule? {
         return TrainRepository.schedule
             .filter { it.direction == dir }

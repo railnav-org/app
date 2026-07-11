@@ -24,6 +24,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 enum class SelectionField { START, END }
 
@@ -83,6 +86,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
 
+    private val _currentMinutes = MutableStateFlow(TrainRepository.currentMinutes())
+    val currentMinutes: StateFlow<Int> = _currentMinutes.asStateFlow()
+
+    private val _currentTimeFormatted = MutableStateFlow("")
+    val currentTimeFormatted: StateFlow<String> = _currentTimeFormatted.asStateFlow()
+
     private var forceNextLocationPrompt = false
 
     private val graph = Graph()
@@ -100,6 +109,33 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 allNodeFeatures = nodeFeatures.sortedBy { it.properties.node_name },
                 isLoading = false
             )
+        }
+
+        // Start background timers bound to the ViewModel's lifecycle
+        viewModelScope.launch {
+            while (true) {
+                val cal = java.util.Calendar.getInstance()
+                _currentMinutes.value =
+                    cal.get(java.util.Calendar.HOUR_OF_DAY) * 60 + cal.get(java.util.Calendar.MINUTE)
+                delay(15000.milliseconds)
+            }
+        }
+
+        viewModelScope.launch {
+            while (true) {
+                val cal = java.util.Calendar.getInstance()
+                val hh = String.format(
+                    java.util.Locale.US,
+                    "%02d",
+                    cal.get(java.util.Calendar.HOUR_OF_DAY)
+                )
+                val mm =
+                    String.format(java.util.Locale.US, "%02d", cal.get(java.util.Calendar.MINUTE))
+                val ss =
+                    String.format(java.util.Locale.US, "%02d", cal.get(java.util.Calendar.SECOND))
+                _currentTimeFormatted.value = "$hh:$mm:$ss"
+                delay(1000.milliseconds)
+            }
         }
     }
 
@@ -328,10 +364,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     isLoading = false,
                     currentInstructionIndex = 0
                 )
-            } catch (_: Exception) {
-                // FIX 2: On crash, return an empty list instead of a List of Strings
+            } catch (e: Exception) {
+                // Respect structured concurrency by rethrowing CancellationException
+                if (e is CancellationException) throw e
+
                 _uiState.value = _uiState.value.copy(
-                    isLoading = false,
+                    isLoading    = false,
                     instructions = emptyList()
                 )
             }
