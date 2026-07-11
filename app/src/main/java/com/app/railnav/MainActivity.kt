@@ -139,6 +139,7 @@ import com.app.railnav.data.TrainDirection
 import com.app.railnav.data.TrainRepository
 import com.app.railnav.data.TrainSchedule
 import com.app.railnav.ui.theme.RailNavTheme
+import com.app.railnav.utils.MapConstants
 import kotlinx.coroutines.launch
 import org.osmdroid.util.GeoPoint
 
@@ -728,10 +729,10 @@ fun MapLegend(modifier: Modifier = Modifier) {
                         modifier = Modifier.padding(top = 6.dp),
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        LegendItem(color = Color(0xFFEED202), label = "Walkway / Path")
-                        LegendItem(color = Color(0xFFFF0800), label = "Stairs")
-                        LegendItem(color = Color(0xFF9C27B0), label = "Escalator")
-                        LegendItem(color = Color(0xFF1976D2), label = "Active Route")
+                        LegendItem(color = MapConstants.COLOR_WALKWAY_COMPOSE, label = "Walkway / Path")
+                        LegendItem(color = MapConstants.COLOR_STAIRS_COMPOSE, label = "Stairs")
+                        LegendItem(color = MapConstants.COLOR_ESCALATOR_COMPOSE, label = "Escalator")
+                        LegendItem(color = MapConstants.COLOR_ACTIVE_ROUTE_COMPOSE, label = "Active Route")
                     }
                 }
             }

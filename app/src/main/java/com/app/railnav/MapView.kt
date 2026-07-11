@@ -18,6 +18,7 @@ import com.app.railnav.data.EdgeFeature
 import com.app.railnav.data.GraphNode
 import com.app.railnav.data.MapUtils
 import com.app.railnav.data.NodeFeature
+import com.app.railnav.utils.MapConstants
 import kotlinx.coroutines.delay
 import org.osmdroid.config.Configuration
 import org.osmdroid.events.MapEventsReceiver
@@ -154,11 +155,10 @@ fun MapView(
                     setPoints(edge.geometry.coordinates.map { GeoPoint(it[1], it[0]) })
                     outlinePaint.strokeWidth = 8f
 
-                    // FIX: Reversed Priority. Check Purple before Orange.
                     outlinePaint.color = when {
-                        isEscalator -> Color.parseColor("#9C27B0") // Purple for Escalators
-                        isStair -> Color.parseColor("#FF0800") // Red for Stairs
-                        else -> Color.parseColor("#EED202") // IDE File Text Blue
+                        isEscalator -> MapConstants.COLOR_ESCALATOR_ANDROID
+                        isStair -> MapConstants.COLOR_STAIRS_ANDROID
+                        else -> MapConstants.COLOR_WALKWAY_ANDROID
                     }
                 }
                 view.overlays.add(polyline)
@@ -186,7 +186,7 @@ fun MapView(
                         })
                         view.overlays.add(Polyline().apply {
                             setPoints(points)
-                            outlinePaint.color = Color.parseColor("#1976D2")
+                            outlinePaint.color = MapConstants.COLOR_ACTIVE_ROUTE_ANDROID
                             outlinePaint.strokeWidth = 12f
                         })
                     }
