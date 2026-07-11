@@ -16,6 +16,7 @@ import com.app.railnav.data.Pathfinder
 import com.app.railnav.data.TrainDirection
 import com.app.railnav.data.TrainRepository
 import com.app.railnav.data.TrainSchedule
+import com.app.railnav.utils.MapConstants
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -344,7 +345,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         }
                     }
                     // Average human walking speed is ~80 meters per minute
-                    val eta = Math.ceil(totalDistance / 80.0).toInt()
+                    val eta = Math.ceil(totalDistance / MapConstants.WALK_SPEED_METERS_PER_MIN).toInt()
 
                     object {
                         val finalPath = path
@@ -452,7 +453,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             } ?: 0.0
 
             // 2. If they wander more than 25 meters away from the line, they are off-route!
-            if (minDistanceToPath > 25.0) {
+            if (minDistanceToPath > MapConstants.OFF_ROUTE_THRESHOLD_METERS) {
                 // Find the nearest station node to their current rogue location
                 val nearestNode = currentState.allNodeFeatures.minByOrNull { node ->
                     GeoPoint(
@@ -473,7 +474,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         //  LIVE ETA & DISTANCE COUNTDOWN
         // ====================================================================
         val currentPath = _uiState.value.calculatedPath
-        if (currentPath != null && currentPath.isNotEmpty()) {
+        if (!currentPath.isNullOrEmpty()) {
             // 1. Find where the user is currently located on the path
             val closestNodeIndex = currentPath.indices.minByOrNull { i ->
                 GeoPoint(
@@ -498,7 +499,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 remainingDist += p1.distanceToAsDouble(p2)
             }
 
-            val newEta = Math.ceil(remainingDist / 80.0).toInt()
+            val newEta = Math.ceil(remainingDist / MapConstants.WALK_SPEED_METERS_PER_MIN).toInt()
 
             _uiState.value = _uiState.value.copy(
                 totalRouteDistanceMeters = remainingDist,
@@ -518,7 +519,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 )
 
                 // If the user gets within 8 meters of the instruction's target node...
-                if (location.distanceToAsDouble(targetLoc) <= 8.0) {
+                if (location.distanceToAsDouble(targetLoc) <= MapConstants.NEXT_STEP_PROXIMITY_METERS) {
                     nextInstruction() // Automatically swipe to the next step!
                 }
             }
