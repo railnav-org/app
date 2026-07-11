@@ -1,3 +1,6 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.android.application)
@@ -5,9 +8,23 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+// Read local.properties at build time
+val localProperties = Properties().apply {
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        load(FileInputStream(localPropertiesFile))
+    }
+}
+val rapidApiKey = localProperties.getProperty("RAPIDAPI_KEY", "")
+
 android {
     namespace = "com.app.railnav"
     compileSdk = 36
+
+    // Enable BuildConfig generation
+    buildFeatures {
+        buildConfig = true
+    }
 
     defaultConfig {
         applicationId = "com.app.railnav"
@@ -15,6 +32,9 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
+
+        // Inject the API key into BuildConfig
+        buildConfigField("String", "RAPIDAPI_KEY", "\"$rapidApiKey\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

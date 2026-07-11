@@ -103,7 +103,6 @@ class TrainScheduleViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val response = RetrofitClient.api.getTrainSchedule(
-                    apiKey = ApiConfig.RAPID_API_KEY,
                     trainNumber = number
                 )
                 if (response.success && response.data.isNotEmpty()) {
