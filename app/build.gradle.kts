@@ -19,7 +19,7 @@ val rapidApiKey = localProperties.getProperty("RAPIDAPI_KEY", "")
 
 android {
     namespace = "com.app.railnav"
-    compileSdk = 36
+    compileSdk = 37
 
     // Enable BuildConfig generation
     buildFeatures {
