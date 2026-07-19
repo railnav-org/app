@@ -31,17 +31,27 @@ jobs:
       - name: Build Debug and Release APKs
         run: ./gradlew assembleDebug assembleRelease
 
-      # This step takes the unsigned release APK and signs it using your secrets
+      # This step natively zipaligns and signs the APK using Ubuntu's installed Android SDK
       - name: Sign Release APK
-        uses: r0adkll/sign-android-release@v1
         id: sign_app
-        with:
-          releaseDirectory: app/build/outputs/apk/release
-          signingKeyBase64: ${{ secrets.KEYSTORE_BASE64 }}
-          alias: ${{ secrets.KEY_ALIAS }}
-          keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
-          keyPassword: ${{ secrets.KEY_PASSWORD }}
-          buildToolsVersion: 34.0.0
+        run: |
+          # 1. Decode the Base64 Keystore
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > my-release-key.jks
+          
+          # 2. Define Paths
+          UNSIGNED_APK="app/build/outputs/apk/release/app-release-unsigned.apk"
+          ALIGNED_APK="app/build/outputs/apk/release/app-release-aligned.apk"
+          SIGNED_APK="app/build/outputs/apk/release/app-release-signed.apk"
+          BUILD_TOOLS="$ANDROID_HOME/build-tools/34.0.0"
+          
+          # 3. Zipalign the APK
+          $BUILD_TOOLS/zipalign -v -p 4 $UNSIGNED_APK $ALIGNED_APK
+          
+          # 4. Sign the APK
+          $BUILD_TOOLS/apksigner sign --ks my-release-key.jks --ks-key-alias "${{ secrets.KEY_ALIAS }}" --ks-pass "pass:${{ secrets.KEYSTORE_PASSWORD }}" --key-pass "pass:${{ secrets.KEY_PASSWORD }}" --out $SIGNED_APK $ALIGNED_APK
+          
+          # 5. Output the signed file path for the GitHub Release step
+          echo "signedReleaseFile=$SIGNED_APK" >> $GITHUB_OUTPUT
 
       # This creates the GitHub Release and attaches the raw APK files directly
       - name: Publish GitHub Release
