@@ -1,4 +1,4 @@
-# RailNav
+## <img src="assets/logo.webp" width="100" align="absmiddle" /> RailNav
 
 RailNav is an enterprise-grade Android application designed to assist commuters in navigating complex, multi-level railway station layouts. It provides offline-capable, graph-based walking directions to facilities such as platforms, exits, ticket counters, and lifts. By leveraging advanced pathfinding algorithms and interactive mapping, the application solves the critical challenge of locating specific amenities within high-density transit hubs, particularly in GNSS-denied environments like transit stations roofed with reinforced concrete.
 
