@@ -107,8 +107,9 @@ class LiveTrainViewModel : ViewModel() {
                     trainNumber = number,
                     startDay = startDay
                 )
-                if (response.success && response.data != null) {
-                    _state.value = LiveTrainUiState.Success(response.data)
+                val data = response.data
+                if (response.success && data != null) {
+                    _state.value = LiveTrainUiState.Success(data)
                     saveToHistory(context, number)
                 } else {
                     _state.value = LiveTrainUiState.Error("No live data found for train #$number")

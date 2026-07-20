@@ -26,4 +26,8 @@ dependencyResolutionManagement {
 
 rootProject.name = "RailNav"
 include(":app")
- 
+include(":core:network")
+include(":core:data")
+include(":core:ui")
+include(":feature:map")
+include(":feature:live-transit")

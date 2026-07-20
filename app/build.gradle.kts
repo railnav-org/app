@@ -44,42 +44,12 @@ android {
 }
 
 dependencies {
-
-    implementation(libs.androidx.compose.material.icons.extended)
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.activity.compose)
-    implementation(libs.androidx.compose.ui.graphics)
-    implementation(libs.androidx.compose.foundation)
-    implementation(libs.androidx.compose.ui.text)
-    testImplementation(libs.junit)
-    implementation(libs.play.services.location)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-    debugImplementation(libs.androidx.compose.ui.test.manifest)
-    implementation(libs.kotlinx.serialization.json)
-    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(project(":core:network"))
+    implementation(project(":core:data"))
+    implementation(project(":core:ui"))
+    implementation(project(":feature:map"))
+    implementation(project(":feature:live-transit"))
+    
+    // Needed for RailNavApplication OSMDroid init
     implementation(libs.osmdroid.android)
-    implementation(libs.androidx.lifecycle.viewmodel.compose)
-
-    // ROOM IMPLEMENTATION
-    implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.room.ktx)
-
-    // KSP (Annotation Processing)
-    ksp(libs.androidx.room.compiler)
-
-    // NETWORKING (Retrofit + OkHttp)
-    implementation(libs.retrofit)
-    implementation(libs.retrofit.converter.kotlinx)
-    implementation(libs.okhttp)
-    implementation(libs.okhttp.logging)
-
-    // OSMDroid Bonus Pack for Clustering
-    implementation("com.github.MKergall:osmbonuspack:6.9.0")
-
-    implementation(libs.hilt.navigation.compose)
 }

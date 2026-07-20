@@ -217,7 +217,8 @@ fun PathfindingScreen(
                         selected = false,
                         onClick = {
                             scope.launch { drawerState.close() }
-                            context.startActivity(Intent(context, PnrStatusActivity::class.java))
+                            val intent = Intent().setClassName(context, "com.app.railnav.PnrStatusActivity")
+                            context.startActivity(intent)
                         },
                         modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                     )
@@ -227,12 +228,8 @@ fun PathfindingScreen(
                         selected = false,
                         onClick = {
                             scope.launch { drawerState.close() }
-                            context.startActivity(
-                                Intent(
-                                    context,
-                                    TrainScheduleActivity::class.java
-                                )
-                            )
+                            val intent = Intent().setClassName(context, "com.app.railnav.TrainScheduleActivity")
+                            context.startActivity(intent)
                         },
                         modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                     )
@@ -242,7 +239,8 @@ fun PathfindingScreen(
                         selected = false,
                         onClick = {
                             scope.launch { drawerState.close() }
-                            context.startActivity(Intent(context, LiveStationActivity::class.java))
+                            val intent = Intent().setClassName(context, "com.app.railnav.LiveStationActivity")
+                            context.startActivity(intent)
                         },
                         modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                     )
@@ -252,7 +250,8 @@ fun PathfindingScreen(
                         selected = false,
                         onClick = {
                             scope.launch { drawerState.close() }
-                            context.startActivity(Intent(context, LiveTrainActivity::class.java))
+                            val intent = Intent().setClassName(context, "com.app.railnav.LiveTrainActivity")
+                            context.startActivity(intent)
                         },
                         modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                     )

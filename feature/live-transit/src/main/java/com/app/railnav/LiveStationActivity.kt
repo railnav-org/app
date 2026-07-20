@@ -107,8 +107,9 @@ class LiveStationViewModel : ViewModel() {
                     hours = hours,
                     destination = destination?.trim()?.uppercase()?.ifBlank { null }
                 )
-                if (response.success && response.data != null) {
-                    _state.value = LiveStationUiState.Success(response.data)
+                val data = response.data
+                if (response.success && data != null) {
+                    _state.value = LiveStationUiState.Success(data)
                     saveToHistory(context, src)
                 } else {
                     _state.value = LiveStationUiState.Error("No data found for station $src")

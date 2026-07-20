@@ -1,6 +1,6 @@
 package com.app.railnav.data.remote
 
-import com.app.railnav.BuildConfig
+import com.app.railnav.core.network.BuildConfig
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.serialization.json.Json
 import okhttp3.Interceptor
