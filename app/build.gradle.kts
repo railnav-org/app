@@ -2,11 +2,10 @@ import java.util.Properties
 import java.io.FileInputStream
 
 plugins {
-    alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.android.application)
+    id("railnav.android.application")
+    id("railnav.android.compose")
+    id("railnav.android.hilt")
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.ksp)
-    alias(libs.plugins.hilt)
 }
 
 // Read local.properties at build time
@@ -20,16 +19,9 @@ val rapidApiKey = localProperties.getProperty("RAPIDAPI_KEY", "")
 
 android {
     namespace = "com.app.railnav"
-    compileSdk = 37
-
-    // Enable BuildConfig generation
-    buildFeatures {
-        buildConfig = true
-    }
 
     defaultConfig {
         applicationId = "com.app.railnav"
-        minSdk = 24
         targetSdk = 36
         versionCode = 1
         versionName = "1.0.0"
@@ -49,34 +41,17 @@ android {
             )
         }
     }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-        compilerOptions {
-            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
-        }
-    }
-    buildFeatures {
-        compose = true
-    }
 }
 
 dependencies {
 
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat) // Or the latest stable version
+    implementation(libs.androidx.appcompat)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
-    implementation(libs.androidx.compose.ui.tooling.preview)
-    implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.foundation)
-    implementation(libs.androidx.compose.runtime)
     implementation(libs.androidx.compose.ui.text)
     testImplementation(libs.junit)
     implementation(libs.play.services.location)
@@ -84,13 +59,11 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-    debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.osmdroid.android)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
-    implementation(libs.play.services.location)
 
     // ROOM IMPLEMENTATION
     implementation(libs.androidx.room.runtime)
@@ -98,9 +71,6 @@ dependencies {
 
     // KSP (Annotation Processing)
     ksp(libs.androidx.room.compiler)
-
-    // JSON SERIALIZATION (Keep this for initial seed data)
-    implementation(libs.kotlinx.serialization.json)
 
     // NETWORKING (Retrofit + OkHttp)
     implementation(libs.retrofit)
@@ -111,7 +81,5 @@ dependencies {
     // OSMDroid Bonus Pack for Clustering
     implementation("com.github.MKergall:osmbonuspack:6.9.0")
 
-    implementation(libs.hilt.android)
-    ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
 }
