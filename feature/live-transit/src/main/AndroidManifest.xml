@@ -4,23 +4,19 @@
     <application>
         <activity
             android:name="com.app.railnav.PnrStatusActivity"
-            android:exported="false"
-            android:theme="@style/Theme.RailNav" />
+            android:exported="false" />
 
         <activity
             android:name="com.app.railnav.TrainScheduleActivity"
-            android:exported="false"
-            android:theme="@style/Theme.RailNav" />
+            android:exported="false" />
 
         <activity
             android:name="com.app.railnav.LiveStationActivity"
-            android:exported="false"
-            android:theme="@style/Theme.RailNav" />
+            android:exported="false" />
 
         <activity
             android:name="com.app.railnav.LiveTrainActivity"
-            android:exported="false"
-            android:theme="@style/Theme.RailNav" />
+            android:exported="false" />
     </application>
 
 </manifest>
