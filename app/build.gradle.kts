@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt)
 }
 
 // Read local.properties at build time
@@ -109,4 +110,8 @@ dependencies {
 
     // OSMDroid Bonus Pack for Clustering
     implementation("com.github.MKergall:osmbonuspack:6.9.0")
+
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+    implementation(libs.hilt.navigation.compose)
 }

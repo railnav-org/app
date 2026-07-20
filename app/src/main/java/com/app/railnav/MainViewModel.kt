@@ -3,6 +3,7 @@ package com.app.railnav
 import android.app.Application
 import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.railnav.data.DirectionGenerator
 import com.app.railnav.data.EdgeFeature
@@ -28,7 +29,11 @@ import org.osmdroid.util.GeoPoint
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
-
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
+import android.content.Context
+import dagger.hilt.android.internal.Contexts.getApplication
+import dagger.hilt.android.qualifiers.ApplicationContext
 enum class SelectionField { START, END }
 
 data class MainUiState(
@@ -82,7 +87,10 @@ data class MainUiState(
     val showMiniLiveBoard: Boolean = true
 )
 
-class MainViewModel(application: Application) : AndroidViewModel(application) {
+@HiltViewModel
+class MainViewModel @Inject constructor(
+    @ApplicationContext private val context: Context
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
@@ -101,8 +109,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         viewModelScope.launch {
-            val nodeFeatures = GraphRepository.loadNodes(getApplication())
-            val edgeFeatures = GraphRepository.loadEdges(getApplication())
+            val nodeFeatures = GraphRepository.loadNodes(context)
+            val edgeFeatures = GraphRepository.loadEdges(context)
             allEdges = edgeFeatures
             graph.build(nodeFeatures, edgeFeatures)
             pathfinder = Pathfinder(graph)
@@ -655,7 +663,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
 
         if (matchedNodes.isEmpty()) {
-            Toast.makeText(getApplication(), "No facilities found.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "No facilities found.", Toast.LENGTH_SHORT).show()
             return
         }
 
