@@ -101,8 +101,9 @@ class PnrViewModel : ViewModel() {
                 val response = RetrofitClient.api.getPnrStatus(
                     pnrNumber = pnr
                 )
-                if (response.success && response.data != null) {
-                    _state.value = PnrUiState.Success(response.data)
+                val data = response.data
+                if (response.success && data != null) {
+                    _state.value = PnrUiState.Success(data)
                     saveToHistory(context, pnr)
                 } else {
                     _state.value = PnrUiState.Error("PNR not found or invalid")

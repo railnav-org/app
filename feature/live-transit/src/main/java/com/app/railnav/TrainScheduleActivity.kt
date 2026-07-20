@@ -105,8 +105,9 @@ class TrainScheduleViewModel : ViewModel() {
                 val response = RetrofitClient.api.getTrainSchedule(
                     trainNumber = number
                 )
-                if (response.success && response.data.isNotEmpty()) {
-                    _state.value = ScheduleUiState.Success(number, response.data)
+                val data = response.data
+                if (response.success && data.isNotEmpty()) {
+                    _state.value = ScheduleUiState.Success(number, data)
                     saveToHistory(context, number)
                 } else {
                     _state.value = ScheduleUiState.Error("No schedule found for train #$number")

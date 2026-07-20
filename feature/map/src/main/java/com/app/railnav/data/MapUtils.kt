@@ -40,21 +40,21 @@ object MapUtils {
         val drawable = when (type) {
             "START" -> getThemedIcon(
                 context,
-                com.app.railnav.R.drawable.location,
+                com.app.railnav.feature.map.R.drawable.location,
                 Color.parseColor("#4CAF50"),
                 42
             )
 
             "END" -> getThemedIcon(
                 context,
-                com.app.railnav.R.drawable.location,
+                com.app.railnav.feature.map.R.drawable.location,
                 Color.parseColor("#F44336"),
                 42
             )
 
             "GPS" -> getThemedIcon(
                 context,
-                com.app.railnav.R.drawable.gps_on,
+                com.app.railnav.feature.map.R.drawable.gps_on,
                 Color.parseColor("#2196F3"),
                 28
             )
@@ -78,10 +78,10 @@ object MapUtils {
         return when {
             // STRICT MATCH: Only show entry icon if the type is exactly "ENTRY/EXIT"
             nodeType == "ENTRY/EXIT" ->
-                getThemedIcon(context, com.app.railnav.R.drawable.entryexit, themeColor, 16)
+                getThemedIcon(context, com.app.railnav.feature.map.R.drawable.entryexit, themeColor, 16)
 
             searchStr.contains("LIFT") || searchStr.contains("ELEVATOR") ->
-                getThemedIcon(context, com.app.railnav.R.drawable.elevator, themeColor, 16)
+                getThemedIcon(context, com.app.railnav.feature.map.R.drawable.elevator, themeColor, 16)
 
             else ->
                 // Generic pathway nodes are kept tiny (8dp) so they don't clutter the map
