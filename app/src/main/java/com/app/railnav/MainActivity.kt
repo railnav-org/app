@@ -79,7 +79,9 @@ import com.app.railnav.ui.components.TrainListSheet
 import com.app.railnav.ui.components.TurnByTurnCard
 import com.app.railnav.ui.theme.RailNavTheme
 import kotlinx.coroutines.launch
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
