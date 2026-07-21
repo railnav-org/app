@@ -11,5 +11,6 @@ data class EdgeEntity(
     val endNodeId: Int,           // Maps to end_id (converted to Int)
     val distance: Double,         // Maps to edge_distance (converted to Double)
     val edgeType: String?,        // Maps to edge_type (STAIR, LIFT, etc.)
-    val geometry: List<List<Double>> // Handled by TypeConverter
+    val geometry: List<List<Double>>, // Handled by TypeConverter
+    val stationHubId: Int? = null // Which station hub this edge belongs to
 )

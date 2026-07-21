@@ -35,6 +35,12 @@ android {
 
         // Inject the API key into BuildConfig
         buildConfigField("String", "RAPIDAPI_KEY", "\"$rapidApiKey\"")
+        
+        // Inject Supabase credentials
+        val supabaseUrl = localProperties.getProperty("SUPABASE_URL", "")
+        val supabaseKey = localProperties.getProperty("SUPABASE_ANON_KEY", "")
+        buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
+        buildConfigField("String", "SUPABASE_ANON_KEY", "\"$supabaseKey\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

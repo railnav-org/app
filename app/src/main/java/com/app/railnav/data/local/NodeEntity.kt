@@ -10,5 +10,6 @@ data class NodeEntity(
     val type: String?,            // Maps to node_type
     val level: Int,               // Maps to node_level
     val lat: Double,              // Maps to coordinates[1]
-    val lon: Double               // Maps to coordinates[0]
+    val lon: Double,              // Maps to coordinates[0]
+    val stationHubId: Int? = null // Which station hub this node belongs to
 )

@@ -1,6 +1,7 @@
 package com.app.railnav
 
 import android.app.Application
+import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -16,6 +17,8 @@ import com.app.railnav.data.Pathfinder
 import com.app.railnav.data.TrainDirection
 import com.app.railnav.data.TrainRepository
 import com.app.railnav.data.TrainSchedule
+import com.app.railnav.data.remote.RemoteStationHub
+import com.app.railnav.data.remote.SupabaseClient
 import com.app.railnav.utils.MapConstants
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -79,7 +82,17 @@ data class MainUiState(
     // Live Board State
     val showLiveBoardSheet: Boolean = false,
     val liveBoardDirection: TrainDirection = TrainDirection.DOWN,
-    val showMiniLiveBoard: Boolean = true
+    val showMiniLiveBoard: Boolean = true,
+
+    // ── on-demand station data streaming ─────────────────────────────────
+    /** True while station data is being downloaded from Supabase */
+    val isDownloadingStationData: Boolean = false,
+    /** Error message if station data download fails */
+    val stationDataError: String? = null,
+    /** Name of the currently loaded station hub */
+    val activeStationName: String? = null,
+    /** Whether station graph data has been loaded (from network or cache) */
+    val isStationDataLoaded: Boolean = false
 )
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
@@ -99,17 +112,45 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private lateinit var pathfinder: Pathfinder
     private var allEdges: List<EdgeFeature> = emptyList()
 
+    /** Geofence manager for detecting proximity to station hubs */
+    private var geofenceManager: GeofenceManager? = null
+
+    /** Known station hubs fetched from Supabase (for software proximity check) */
+    private var knownStationHubs: List<RemoteStationHub> = emptyList()
+
+    /** Track which hub IDs have already been loaded to avoid duplicate fetches */
+    private val loadedHubIds = mutableSetOf<Int>()
+
+    companion object {
+        private const val TAG = "MainViewModel"
+    }
+
     init {
+        // Start with an empty map — data will be loaded on-demand when
+        // the user approaches a transit hub (geofence trigger).
         viewModelScope.launch {
-            val nodeFeatures = GraphRepository.loadNodes(getApplication())
-            val edgeFeatures = GraphRepository.loadEdges(getApplication())
-            allEdges = edgeFeatures
-            graph.build(nodeFeatures, edgeFeatures)
-            pathfinder = Pathfinder(graph)
-            _uiState.value = MainUiState(
-                allNodeFeatures = nodeFeatures.sortedBy { it.properties.node_name },
-                isLoading = false
-            )
+            // Try to load any previously cached station data from Room
+            val cachedNodes = GraphRepository.loadNodes(getApplication())
+            val cachedEdges = GraphRepository.loadEdges(getApplication())
+
+            if (cachedNodes.isNotEmpty()) {
+                // We have cached data — build the graph immediately
+                allEdges = cachedEdges
+                graph.build(cachedNodes, cachedEdges)
+                pathfinder = Pathfinder(graph)
+                _uiState.value = MainUiState(
+                    allNodeFeatures = cachedNodes.sortedBy { it.properties.node_name },
+                    isLoading = false,
+                    isStationDataLoaded = true,
+                    activeStationName = "Cached Station"
+                )
+            } else {
+                // No cached data — show empty map, wait for geofence
+                _uiState.value = MainUiState(isLoading = false)
+            }
+
+            // Fetch the list of station hubs from Supabase for geofence registration
+            fetchStationHubs()
         }
 
         // Start background timers bound to the ViewModel's lifecycle
@@ -437,6 +478,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun onLocationReceived(location: GeoPoint) {
         _uiState.value = _uiState.value.copy(userGpsLocation = location)
 
+        // ====================================================================
+        //  SOFTWARE GEOFENCE: Check proximity to known station hubs
+        // ====================================================================
+        if (knownStationHubs.isNotEmpty() && !_uiState.value.isDownloadingStationData) {
+            geofenceManager?.checkProximity(
+                location.latitude, location.longitude, knownStationHubs
+            )?.let { nearbyHub ->
+                if (nearbyHub.id !in loadedHubIds) {
+                    onGeofenceEntered(nearbyHub.id, nearbyHub.stationName)
+                }
+            }
+        }
+
         val currentState = _uiState.value
 
         // ====================================================================
@@ -760,4 +814,139 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.value = _uiState.value.copy(liveBoardDirection = direction)
     }
 
+    // ======================================================================
+    // ON-DEMAND STATION DATA STREAMING (Issue #18)
+    // ======================================================================
+
+    /**
+     * Fetches the list of station hubs from Supabase and initializes the
+     * [GeofenceManager] to register hardware geofences.
+     */
+    private fun fetchStationHubs() {
+        viewModelScope.launch {
+            try {
+                val hubs = withContext(Dispatchers.IO) {
+                    SupabaseClient.fetchStationHubs()
+                }
+
+                if (hubs.isNotEmpty()) {
+                    knownStationHubs = hubs
+
+                    // Initialize GeofenceManager and register hardware geofences
+                    geofenceManager = GeofenceManager(
+                        context = getApplication(),
+                        onGeofenceEntered = { hubId, stationName ->
+                            onGeofenceEntered(hubId, stationName)
+                        }
+                    )
+                    geofenceManager?.registerGeofences(hubs)
+
+                    Log.d(TAG, "Registered ${hubs.size} station hub geofences")
+                } else {
+                    Log.w(TAG, "No station hubs returned from Supabase")
+                }
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                Log.e(TAG, "Failed to fetch station hubs", e)
+            }
+        }
+    }
+
+    /**
+     * Called when the user enters a geofence zone around a transit hub.
+     * Fetches station graph data from Supabase PostGIS and rebuilds the graph.
+     *
+     * @param hubId The ID of the station hub that was entered
+     * @param stationName Human-readable name of the station
+     */
+    fun onGeofenceEntered(hubId: Int, stationName: String) {
+        // Don't re-fetch if already loaded or currently downloading
+        if (hubId in loadedHubIds || _uiState.value.isDownloadingStationData) return
+
+        Log.d(TAG, "Geofence entered: $stationName (hub $hubId) — loading station data")
+
+        _uiState.value = _uiState.value.copy(
+            isDownloadingStationData = true,
+            stationDataError = null
+        )
+
+        viewModelScope.launch {
+            try {
+                // Find the hub's coordinates for the RPC call
+                val hub = knownStationHubs.find { it.id == hubId }
+                val lat = hub?.lat ?: _uiState.value.userGpsLocation?.latitude ?: return@launch
+                val lon = hub?.lon ?: _uiState.value.userGpsLocation?.longitude ?: return@launch
+
+                val result = withContext(Dispatchers.IO) {
+                    GraphRepository.loadStationData(
+                        context = getApplication(),
+                        lat = lat,
+                        lon = lon,
+                        hubId = hubId,
+                        stationName = stationName
+                    )
+                }
+
+                if (result != null && result.nodes.isNotEmpty()) {
+                    // Mark this hub as loaded
+                    loadedHubIds.add(hubId)
+
+                    // Merge with existing data (support multi-station)
+                    val existingNodes = _uiState.value.allNodeFeatures
+                    val existingNodeIds = existingNodes.map { it.properties.node_id }.toSet()
+                    val newNodes = result.nodes.filter { it.properties.node_id !in existingNodeIds }
+                    val mergedNodes = existingNodes + newNodes
+
+                    val mergedEdges = allEdges + result.edges
+                    allEdges = mergedEdges
+
+                    // Rebuild the full graph
+                    graph.build(mergedNodes, mergedEdges)
+                    pathfinder = Pathfinder(graph)
+
+                    _uiState.value = _uiState.value.copy(
+                        allNodeFeatures = mergedNodes.sortedBy { it.properties.node_name },
+                        isDownloadingStationData = false,
+                        isStationDataLoaded = true,
+                        activeStationName = stationName,
+                        isLoading = false
+                    )
+
+                    val source = if (result.fromCache) "cache" else "network"
+                    Log.d(TAG, "Loaded ${result.nodes.size} nodes + ${result.edges.size} edges from $source for $stationName")
+
+                    Toast.makeText(
+                        getApplication(),
+                        "$stationName station map loaded",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                } else {
+                    _uiState.value = _uiState.value.copy(
+                        isDownloadingStationData = false,
+                        stationDataError = "No data available for $stationName"
+                    )
+                }
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+
+                Log.e(TAG, "Failed to load station data for $stationName", e)
+                _uiState.value = _uiState.value.copy(
+                    isDownloadingStationData = false,
+                    stationDataError = "Failed to load station data: ${e.message}"
+                )
+            }
+        }
+    }
+
+    /**
+     * Clears the station data error message from the UI state.
+     */
+    fun clearStationDataError() {
+        _uiState.value = _uiState.value.copy(stationDataError = null)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        geofenceManager?.removeAllGeofences()
+    }
 }
